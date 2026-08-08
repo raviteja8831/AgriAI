@@ -1,0 +1,74 @@
+{
+  "http": {
+    "400": "Invalid input — please check your details.",
+    "401": "Session expired — please login again.",
+    "403": "You don't have permission for this action.",
+    "404": "Information not found.",
+    "409": "Already exists — use a different value.",
+    "422": "Please fill in all required fields.",
+    "429": "Too many attempts — please wait a minute.",
+    "500": "Something went wrong on our end. Please try again.",
+    "502": "Service unavailable — please try again later.",
+    "503": "Under maintenance — please try again soon."
+  },
+  "network": {
+    "ERR_NETWORK":    "Cannot reach server. Is the backend running?",
+    "ECONNABORTED":   "Request timed out. Please try again.",
+    "NETWORK_ERROR":  "No internet connection. Please check your network."
+  },
+  "api": {
+    "Phone already registered":          "This mobile number is already registered.",
+    "Invalid OTP":                        "Wrong OTP — please try again.",
+    "OTP expired. Request a new one.":   "OTP expired — tap Resend OTP.",
+    "Invalid credentials":               "Wrong phone number or password.",
+    "Account deactivated":               "Account deactivated — contact support.",
+    "Farm not found":                    "Farm not found or access denied.",
+    "Crop not found":                    "Crop not found or access denied.",
+    "Phone not registered":              "Number not registered — please sign up.",
+    "No token provided":                 "Please login to continue.",
+    "Invalid token":                     "Session expired — please login again.",
+    "Failed to send OTP":                "Could not send OTP — check your number.",
+    "Weather data unavailable":          "Weather unavailable — check farm GPS location.",
+    "Farm location not set":             "Please set GPS location for this farm first.",
+    "Sowing date required":              "Please set a sowing date for this crop first.",
+    "Name required":                     "Please enter your name."
+  },
+  "validation": {
+    "name":       "Please enter your full name.",
+    "phone":      "Enter a valid 10-digit mobile number.",
+    "password":   "Password must be at least 6 characters.",
+    "amount":     "Enter a valid amount in ₹.",
+    "area_acres": "Enter farm area in acres (e.g. 2.5).",
+    "farm_id":    "Please select a farm.",
+    "crop_name":  "Enter the crop name.",
+    "ph":         "Soil pH must be between 4.0 and 10.0.",
+    "yield_kg":   "Enter the yield in kg."
+  },
+  "success": {
+    "otpSent":           "OTP sent to your number.",
+    "login":             "Welcome back! 🙏",
+    "profileSetup":      "Profile saved! Welcome to AgriAI 🌾",
+    "farmCreated":       "Farm added successfully! 🏡",
+    "farmUpdated":       "Farm details updated.",
+    "farmDeleted":       "Farm removed.",
+    "cropAdded":         "Crop added! 🌱",
+    "cropUpdated":       "Crop updated.",
+    "expenseAdded":      "Expense recorded. 💰",
+    "expenseDeleted":    "Expense removed.",
+    "harvestSaved":      "Harvest recorded! 🌾 Great season!",
+    "profileUpdated":    "Profile updated successfully.",
+    "passwordChanged":   "Password changed successfully.",
+    "calendarGenerated": "Crop calendar ready! 📅",
+    "taskDone":          "Task marked done! ✅",
+    "taskUndone":        "Task marked pending.",
+    "imageUploaded":     "Photo saved! 📷",
+    "imageDeleted":      "Photo removed.",
+    "soilReportSaved":   "Soil report saved! 🧪"
+  },
+  "warning": {
+    "locationDenied":  "Location permission denied — tap map to set location manually.",
+    "noFarmGPS":       "Farm has no GPS — weather won't load until you set a location.",
+    "cameraDenied":    "Camera permission denied — go to Settings to enable.",
+    "budgetExceeded":  "This crop's cost is slightly above your budget."
+  }
+}

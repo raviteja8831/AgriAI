@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setAuthToken } from '../utils/api';
 
 export const loadStoredAuth = createAsyncThunk('auth/loadStored', async () => {
   try {
@@ -15,7 +16,7 @@ export const loadStoredAuth = createAsyncThunk('auth/loadStored', async () => {
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState: { token: null, user: null, isAuthenticated: false, loaded: false },
+  initialState: { token: null, user: null, isAuthenticated: false, loaded: false, freshLogin: false },
   reducers: {
     setCredentials(state, { payload }) {
       state.token = payload.token;
@@ -28,14 +29,26 @@ const authSlice = createSlice({
       state.user = merged;
       state.isAuthenticated = true;
       state.loaded = true;
+      setAuthToken(payload.token);
       AsyncStorage.setItem('token', payload.token).catch(() => {});
       AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(() => {});
+    },
+    // Marks that the user just completed the login action (as opposed to
+    // being auto-restored from stored auth on app launch), so the
+    // "stay connected" screen can be shown once per fresh login.
+    loginSuccess(state) {
+      state.freshLogin = true;
+    },
+    acknowledgeConnect(state) {
+      state.freshLogin = false;
     },
     logout(state) {
       state.token = null;
       state.user = null;
       state.isAuthenticated = false;
       state.loaded = true;
+      state.freshLogin = false;
+      setAuthToken(null);
       AsyncStorage.multiRemove(['token', 'user']).catch(() => {});
     },
     updateUser(state, { payload }) {
@@ -56,6 +69,7 @@ const authSlice = createSlice({
         state.user = payload.user;
         state.isAuthenticated = !!payload.token;
         state.loaded = true;
+        setAuthToken(payload.token);
       })
       .addCase(loadStoredAuth.rejected, (state) => {
         state.loaded = true; // don't hang on error
@@ -63,5 +77,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, logout, updateUser } = authSlice.actions;
+export const { setCredentials, loginSuccess, acknowledgeConnect, logout, updateUser } = authSlice.actions;
 export default authSlice.reducer;

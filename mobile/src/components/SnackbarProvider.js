@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Animated, Platform } from 'react-native';
 import { Text } from 'react-native-paper';
 import { TouchableOpacity } from 'react-native';
@@ -20,20 +20,14 @@ export const globalSnack = (message, type = 'error') => { _globalShow?.(message,
 
 export function SnackbarProvider({ children }) {
   const [queue, setQueue] = useState([]);
-  const timerRef = useRef(null);
 
   const dismiss = useCallback(() => {
-    clearTimeout(timerRef.current);
     setQueue((q) => q.slice(1));
   }, []);
 
   const show = useCallback((message, type = 'error', duration = 4000) => {
     const id = Date.now();
-    setQueue((q) => [...q.slice(-1), { id, message, type }]); // max 2 queued
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      setQueue((q) => q.filter((s) => s.id !== id));
-    }, duration);
+    setQueue((q) => [...q.slice(-1), { id, message, type, duration }]); // max 2 queued
   }, []);
 
   // Expose to axios interceptor
@@ -42,6 +36,19 @@ export function SnackbarProvider({ children }) {
     return () => setGlobalSnackbar(null);
   }, [show]);
 
+  const current = queue[0];
+
+  // Each snackbar gets its own dismiss timer tied to whichever one is
+  // currently showing, so a later toast queuing up can't cancel an earlier
+  // toast's timer and leave it stuck on screen.
+  useEffect(() => {
+    if (!current) return;
+    const timer = setTimeout(() => {
+      setQueue((q) => q.filter((s) => s.id !== current.id));
+    }, current.duration);
+    return () => clearTimeout(timer);
+  }, [current?.id]);
+
   const ctx = {
     show,
     showError:   (m, d) => show(m, 'error',   d),
@@ -49,8 +56,6 @@ export function SnackbarProvider({ children }) {
     showWarning: (m, d) => show(m, 'warning', d),
     showInfo:    (m, d) => show(m, 'info',    d),
   };
-
-  const current = queue[0];
 
   return (
     <SnackbarContext.Provider value={ctx}>

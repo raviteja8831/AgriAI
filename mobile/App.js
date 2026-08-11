@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -16,7 +17,9 @@ import { loadStoredAuth } from './src/store/authSlice';
 import { theme, colors } from './src/utils/theme';
 import DrawerContent from './src/components/DrawerContent';
 
+import IntroScreen from './src/screens/IntroScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import StayConnectedScreen from './src/screens/StayConnectedScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import FarmsScreen from './src/screens/FarmsScreen';
@@ -114,11 +117,20 @@ function AuthStack() {
 
 function RootNavigator() {
   const dispatch = useDispatch();
-  const { isAuthenticated, loaded, user } = useSelector((s) => s.auth);
+  const { isAuthenticated, loaded, user, freshLogin } = useSelector((s) => s.auth);
+  const [introSeen, setIntroSeen] = useState(null); // null = not yet checked
 
-  useEffect(() => { dispatch(loadStoredAuth()); }, []);
+  useEffect(() => {
+    dispatch(loadStoredAuth());
+    AsyncStorage.getItem('introSeen').then((v) => setIntroSeen(v === 'true'));
+  }, []);
 
-  if (!loaded) return (
+  const finishIntro = () => {
+    AsyncStorage.setItem('introSeen', 'true').catch(() => {});
+    setIntroSeen(true);
+  };
+
+  if (!loaded || introSeen === null) return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary }}>
       <Text style={{ fontSize: 64 }}>🌾</Text>
       <ActivityIndicator color="#fff" size="large" style={{ marginTop: 16 }} />
@@ -131,8 +143,12 @@ function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {!isAuthenticated ? (
+      {!introSeen ? (
+        <IntroScreen onDone={finishIntro} />
+      ) : !isAuthenticated ? (
         <AuthStack />
+      ) : freshLogin ? (
+        <StayConnectedScreen />
       ) : needsOnboarding ? (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />

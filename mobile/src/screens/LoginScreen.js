@@ -3,7 +3,7 @@ import { View, StyleSheet, KeyboardAvoidingView, Platform, TextInput as RNTextIn
 import { Text, Button } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import { authAPI } from '../api';
-import { setCredentials } from '../store/authSlice';
+import { setCredentials, loginSuccess } from '../store/authSlice';
 import { useSnackbar } from '../components/SnackbarProvider';
 import MESSAGES from '../config/messages.json';
 import { colors } from '../utils/theme';
@@ -56,6 +56,7 @@ export default function LoginScreen() {
     try {
       const { data } = await authAPI.verifyOTP({ phone: phone.replace(/\D/g, ''), otp: code });
       dispatch(setCredentials(data));
+      dispatch(loginSuccess());
       snack.showSuccess(MESSAGES.success.login);
     } catch {
       setOtp(['', '', '', '']);

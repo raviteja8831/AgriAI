@@ -24,6 +24,11 @@ export const BASE_URL = getBaseUrl();
 
 const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
 
+// In-memory copy of the JWT, kept in sync by authSlice so requests never race
+// the async AsyncStorage write that happens on login (see setAuthToken below).
+let currentToken = null;
+export const setAuthToken = (token) => { currentToken = token; };
+
 // ── Request: attach JWT ───────────────────────────────────────────────────────
 api.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem('token');

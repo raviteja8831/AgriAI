@@ -8,6 +8,7 @@ import MarketPriceCard from '../components/MarketPriceCard';
 import CropProgressCard from '../components/CropProgressCard';
 import api from '../utils/api';
 import { colors } from '../utils/theme';
+import { capitalize } from '../utils/format';
 
 const QuickStat = ({ emoji, label, value, sub, onPress, alert }) => (
   <TouchableOpacity style={[styles.statBox, alert && styles.statBoxAlert]} onPress={onPress} activeOpacity={0.8}>
@@ -88,7 +89,7 @@ export default function DashboardScreen({ navigation }) {
   const pestRisk = dash?.pest_risk;
   const prices = marketData?.prices || [];
 
-  const firstName = user?.name?.split(' ')[0] || 'Farmer';
+  const firstName = capitalize(user?.name?.split(' ')[0]) || 'Farmer';
 
   return (
     <ScrollView

@@ -46,6 +46,13 @@ const MenuButton = ({ navigation }) => (
   </TouchableOpacity>
 );
 
+// Back arrow — shown on the Profile screen so it doesn't dead-end without a way back to Dashboard
+const BackButton = ({ navigation }) => (
+  <TouchableOpacity onPress={() => navigation.navigate('Dashboard')} style={{ paddingHorizontal: 16 }}>
+    <Text style={{ color: '#fff', fontSize: 22 }}>←</Text>
+  </TouchableOpacity>
+);
+
 function FarmsStack({ navigation }) {
   return (
     <Stack.Navigator
@@ -102,7 +109,15 @@ function AppDrawer() {
       <Drawer.Screen name="Weather"   component={WeatherScreen}    options={{ title: 'Weather',       drawerIcon: () => <Text>🌤️</Text> }} />
       <Drawer.Screen name="Calendar"  component={CalendarScreen}   options={{ title: 'Crop Calendar', drawerIcon: () => <Text>📅</Text> }} />
       <Drawer.Screen name="Soil"      component={SoilScreen}       options={{ title: 'Soil Analysis', drawerIcon: () => <Text>🧪</Text> }} />
-      <Drawer.Screen name="Profile"   component={ProfileScreen}    options={{ title: 'My Profile',    drawerIcon: () => <Text>👤</Text> }} />
+      <Drawer.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={({ navigation }) => ({
+          title: 'My Profile',
+          drawerIcon: () => <Text>👤</Text>,
+          headerLeft: () => <BackButton navigation={navigation} />,
+        })}
+      />
     </Drawer.Navigator>
   );
 }

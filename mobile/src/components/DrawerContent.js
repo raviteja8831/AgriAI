@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../store/authSlice';
 import { colors } from '../utils/theme';
 import { BASE_URL } from '../utils/api';
+import { capitalize } from '../utils/format';
 
 export default function DrawerContent(props) {
   const dispatch = useDispatch();
@@ -26,7 +27,7 @@ export default function DrawerContent(props) {
             <Avatar.Text size={80} label={user?.name?.[0]?.toUpperCase() || 'F'} style={styles.avatar} />
           )}
           <View style={{ marginLeft: 12, flex: 1 }}>
-            <Text style={styles.userName}>{user?.name}</Text>
+            <Text style={styles.userName}>{capitalize(user?.name)}</Text>
             <Text style={styles.userPhone}>{user?.phone}</Text>
             <Pressable onPress={goToProfile} style={({ pressed }) => [styles.updateProfileWrap, pressed && styles.updateProfileWrapPressed]}>
               {({ pressed }) => (

@@ -69,7 +69,7 @@ exports.verifyOTP = async (req, res) => {
     res.json({
       success: true,
       token,
-      user: { id: user.id, name: user.name, phone: user.phone, role: user.role, language: user.language },
+      user: { id: user.id, name: user.name, phone: user.phone, role: user.role, language: user.language, has_password: !!user.password_hash },
       isNewUser,
     });
   } catch (err) {
@@ -83,7 +83,7 @@ exports.setupProfile = async (req, res) => {
   if (!name) return res.status(400).json({ success: false, message: 'Name required' });
   try {
     await req.user.update({ name, language: language || 'en' });
-    res.json({ success: true, user: { id: req.user.id, name, phone: req.user.phone, role: req.user.role, language } });
+    res.json({ success: true, user: { id: req.user.id, name, phone: req.user.phone, role: req.user.role, language, has_password: !!req.user.password_hash } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Setup failed' });
   }
@@ -91,7 +91,7 @@ exports.setupProfile = async (req, res) => {
 
 exports.getMe = async (req, res) => {
   const u = req.user;
-  res.json({ success: true, user: { id: u.id, name: u.name, phone: u.phone, role: u.role, language: u.language, profile_image: u.profile_image } });
+  res.json({ success: true, user: { id: u.id, name: u.name, phone: u.phone, role: u.role, language: u.language, profile_image: u.profile_image, has_password: !!u.password_hash } });
 };
 
 exports.updateProfile = async (req, res) => {
@@ -120,12 +120,13 @@ exports.changePassword = async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (user.password_hash) {
+      if (!current_password) return res.status(400).json({ success: false, message: 'Current password required' });
       const valid = await user.validatePassword(current_password);
       if (!valid) return res.status(400).json({ success: false, message: 'Current password incorrect' });
     }
     const hashed = await bcrypt.hash(new_password, 12);
     await user.update({ password_hash: hashed });
-    res.json({ success: true, message: 'Password changed' });
+    res.json({ success: true, message: 'Password changed', has_password: true });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Failed to change password' });
   }
@@ -142,7 +143,7 @@ exports.login = async (req, res) => {
     if (!valid) return res.status(401).json({ success: false, message: 'Invalid credentials' });
     await user.update({ last_login: new Date() });
     const token = signToken(user.id);
-    res.json({ success: true, token, user: { id: user.id, name: user.name, phone: user.phone, role: user.role, language: user.language } });
+    res.json({ success: true, token, user: { id: user.id, name: user.name, phone: user.phone, role: user.role, language: user.language, has_password: true } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Login failed' });
   }

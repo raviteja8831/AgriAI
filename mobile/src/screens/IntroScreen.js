@@ -4,31 +4,59 @@ import { Text, Button, IconButton } from 'react-native-paper';
 import * as Location from 'expo-location';
 import { colors } from '../utils/theme';
 
-const PRIVACY_POLICY_SECTIONS = [
+const TERMS_SECTIONS = [
   {
-    title: 'Information we collect',
-    body: 'AgriAI collects your phone number for login, and your farm location and crop details to give you personalised weather, soil and crop recommendations.',
+    title: '1. General',
+    body: 'AgriAI is a farming advisory platform that gives you weather, soil and crop recommendations based on the information you provide. AgriAI does not guarantee farming, yield or financial outcomes from following its recommendations.',
   },
   {
-    title: 'How we use your data',
-    body: 'We never sell your personal data to third parties. Your information is used only to improve your farming recommendations and app experience, and is stored securely.',
+    title: '2. Eligibility',
+    body: 'You must be at least 18 years old and legally capable of entering into a contract under Indian law to use AgriAI. We may suspend or terminate accounts that violate this requirement.',
   },
   {
-    title: 'Your controls',
-    body: "You can review, update or delete your data at any time from your Profile page. By continuing, you agree to our data practices as described here.",
+    title: '3. Acceptance of Terms',
+    body: 'By creating an account or using AgriAI, you agree to be bound by these Terms & Conditions. We may update these terms from time to time; continued use of the app after an update means you accept the revised terms.',
+  },
+  {
+    title: '4. Your Account',
+    body: 'You are responsible for keeping your login details and account information accurate and confidential. AgriAI may suspend accounts that contain false or misleading information.',
+  },
+  {
+    title: '5. Privacy',
+    body: 'Your phone number, farm location and crop details are collected only to personalise your recommendations and are never sold to third parties. You can review, update or delete this data anytime from your Profile page.',
+  },
+  {
+    title: '6. License and Access',
+    body: 'We grant you a limited, non-transferable license to use AgriAI for your own farming needs. Copying, reverse-engineering or commercially exploiting the app or its content is not permitted.',
+  },
+  {
+    title: '7. Advisory Disclaimer',
+    body: 'Weather, soil and crop recommendations are generated to assist your decisions and should be used alongside your own judgement and local agricultural guidance. AgriAI is not liable for losses arising from actions taken based on its recommendations.',
+  },
+  {
+    title: '8. Prohibited Uses',
+    body: 'You agree not to misuse the app, attempt unauthorised access, scrape data, or use AgriAI for any unlawful purpose. Violations may result in immediate suspension of your account.',
+  },
+  {
+    title: '9. Limitation of Liability',
+    body: "AgriAI is provided on an 'as is' and 'as available' basis. To the extent permitted by law, we disclaim liability for indirect damages or service interruptions.",
+  },
+  {
+    title: '10. Governing Law and Grievances',
+    body: 'These terms are governed by the laws of India. For any grievance regarding the app, please contact us through the support option in your Profile page.',
   },
 ];
 
-function PrivacyPolicyModal({ visible, onClose }) {
+function TermsModal({ visible, onClose }) {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.modalContainer}>
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Privacy Policy</Text>
+          <Text style={styles.modalTitle}>Terms and Conditions</Text>
           <IconButton icon="close" onPress={onClose} />
         </View>
         <ScrollView contentContainerStyle={styles.modalBody}>
-          {PRIVACY_POLICY_SECTIONS.map((section) => (
+          {TERMS_SECTIONS.map((section) => (
             <View key={section.title} style={styles.policySection}>
               <Text style={styles.policyHeading}>{section.title}</Text>
               <Text style={styles.body}>{section.body}</Text>
@@ -45,9 +73,40 @@ function PrivacyPolicyModal({ visible, onClose }) {
   );
 }
 
+function LocationDialog({ visible, requesting, onAllow, onDismiss }) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss}>
+      <View style={styles.dialogBackdrop}>
+        <View style={styles.dialogCard}>
+          <Text style={styles.emoji}>📍</Text>
+          <Text style={styles.stepTitle}>Enable your location</Text>
+          <Text style={[styles.body, styles.bodyLight]}>
+            AgriAI uses your location to show weather, soil and crop recommendations
+            specific to your farm's region.
+          </Text>
+          <Button
+            mode="contained"
+            buttonColor={colors.info}
+            style={styles.nextBtn}
+            contentStyle={styles.btnContent}
+            loading={requesting}
+            disabled={requesting}
+            onPress={onAllow}
+          >
+            Allow Location Access
+          </Button>
+          <Button mode="text" textColor={colors.textPrimary} onPress={onDismiss} disabled={requesting} style={{ marginTop: 4 }}>
+            Not now
+          </Button>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
 export default function IntroScreen({ onDone }) {
-  const [step, setStep] = useState(0); // 0 = welcome/privacy, 1 = location
-  const [policyVisible, setPolicyVisible] = useState(false);
+  const [termsVisible, setTermsVisible] = useState(false);
+  const [locationVisible, setLocationVisible] = useState(false);
   const [requesting, setRequesting] = useState(false);
 
   const requestLocation = async () => {
@@ -62,67 +121,56 @@ export default function IntroScreen({ onDone }) {
 
   return (
     <View style={styles.container}>
-      {step === 0 ? (
-        <>
-          <View style={styles.hero}>
-            <Text style={styles.logo}>🌾</Text>
-            <Text style={styles.appName}>AgriAI</Text>
-            <Text style={styles.tagline}>Smart Farming Platform</Text>
-          </View>
-          <View style={styles.footer}>
-            <Button mode="outlined" style={styles.btn} contentStyle={styles.btnContent} textColor="#fff" onPress={() => setPolicyVisible(true)}>
-              Privacy Policy
-            </Button>
-            <Button mode="contained" style={[styles.btn, { marginTop: 12 }]} contentStyle={styles.btnContent} onPress={() => setStep(1)}>
-              Next
-            </Button>
-          </View>
-          <PrivacyPolicyModal visible={policyVisible} onClose={() => setPolicyVisible(false)} />
-        </>
-      ) : (
-        <>
-          <View style={styles.hero}>
-            <Text style={styles.emoji}>📍</Text>
-            <Text style={styles.stepTitle}>Enable your location</Text>
-            <Text style={[styles.body, styles.bodyLight]}>
-              AgriAI uses your location to show weather, soil and crop recommendations
-              specific to your farm's region.
-            </Text>
-          </View>
-          <View style={styles.footer}>
-            <Button
-              mode="contained"
-              style={styles.btn}
-              contentStyle={styles.btnContent}
-              loading={requesting}
-              disabled={requesting}
-              onPress={requestLocation}
-            >
-              Allow Location Access
-            </Button>
-            <Button mode="text" textColor="#fff" onPress={onDone} disabled={requesting} style={{ marginTop: 4 }}>
-              Not now
-            </Button>
-          </View>
-        </>
-      )}
+      <View style={styles.hero}>
+        <Text style={styles.logo}>🌾</Text>
+        <Text style={styles.appName}>AgriAI</Text>
+        <Text style={styles.tagline}>Smart Farming Platform</Text>
+      </View>
+      <View style={styles.footer}>
+        <Button
+          mode="contained"
+          buttonColor={colors.info}
+          style={styles.nextBtn}
+          contentStyle={styles.btnContent}
+          onPress={() => setLocationVisible(true)}
+        >
+          Next
+        </Button>
+        <Text style={styles.termsLink} onPress={() => setTermsVisible(true)}>
+          Terms and Conditions
+        </Text>
+      </View>
+      <TermsModal visible={termsVisible} onClose={() => setTermsVisible(false)} />
+      <LocationDialog
+        visible={locationVisible}
+        requesting={requesting}
+        onAllow={requestLocation}
+        onDismiss={() => {
+          setLocationVisible(false);
+          onDone();
+        }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.primary },
-  hero: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  container: { flex: 1, backgroundColor: '#FFFDE7' },
+  hero: { flex: 6, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   logo: { fontSize: 72 },
-  appName: { fontSize: 32, fontWeight: '800', color: '#fff', marginTop: 8 },
-  tagline: { fontSize: 14, color: 'rgba(255,255,255,0.75)', marginTop: 4 },
+  appName: { fontSize: 32, fontWeight: '800', color: colors.textPrimary, marginTop: 8 },
+  tagline: { fontSize: 14, color: colors.textSecondary, marginTop: 4 },
   emoji: { fontSize: 56, marginBottom: 12 },
-  stepTitle: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 10, textAlign: 'center' },
+  stepTitle: { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, textAlign: 'center' },
   body: { fontSize: 14, lineHeight: 21, color: colors.textSecondary, marginBottom: 14 },
-  bodyLight: { color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 0 },
-  footer: { padding: 24, paddingBottom: 40 },
+  bodyLight: { color: colors.textSecondary, textAlign: 'center', marginBottom: 0 },
+  footer: { flex: 4, alignItems: 'center', paddingHorizontal: 24, paddingTop: 8 },
   btn: { borderRadius: 12, borderColor: '#fff' },
+  nextBtn: { borderRadius: 12, width: '70%' },
   btnContent: { paddingVertical: 8 },
+  termsLink: { color: colors.info, textDecorationLine: 'underline', marginTop: 16, fontSize: 14 },
+  dialogBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center', padding: 24 },
+  dialogCard: { width: '100%', backgroundColor: '#FFFDE7', borderRadius: 16, paddingVertical: 28, paddingHorizontal: 24, alignItems: 'center' },
   modalContainer: { flex: 1, backgroundColor: '#fff' },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 20, paddingTop: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
   modalTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },

@@ -29,6 +29,7 @@ const authSlice = createSlice({
       state.user = merged;
       state.isAuthenticated = true;
       state.loaded = true;
+      setAuthToken(payload.token);
       if (payload.token) AsyncStorage.setItem('token', payload.token).catch(() => {});
       AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(() => {});
     },

@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SnackbarProvider } from './src/components/SnackbarProvider';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
+import { View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Text } from 'react-native-paper';
 
 import store from './src/store';
@@ -79,9 +79,6 @@ function CropsStack({ navigation }) {
 }
 
 function AppDrawer() {
-  // On wide web screens, show permanent drawer (sidebar); on mobile, slide-over
-  const drawerType = Platform.OS === 'web' ? 'permanent' : 'slide';
-
   return (
     <Drawer.Navigator
       drawerContent={(props) => <DrawerContent {...props} />}
@@ -89,20 +86,20 @@ function AppDrawer() {
         headerStyle,
         headerTintColor,
         headerTitleStyle,
-        drawerType,
-        drawerStyle: Platform.OS === 'web' ? { width: 240 } : undefined,
+        drawerType: 'front',
+        drawerStyle: { width: '80%', borderTopRightRadius: 24, borderBottomRightRadius: 24, overflow: 'hidden' },
         drawerActiveBackgroundColor: colors.primaryLight + '30',
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.textPrimary,
       }}
     >
-      <Drawer.Screen name="Dashboard" component={DashboardScreen}  options={{ title: 'Dashboard',     drawerIcon: () => '📊 ' }} />
-      <Drawer.Screen name="Farms"     component={FarmsStack}       options={{ title: 'My Farms',      drawerIcon: () => '🏡 ', headerShown: false }} />
-      <Drawer.Screen name="Crops"     component={CropsStack}       options={{ title: 'Crops',         drawerIcon: () => '🌿 ', headerShown: false }} />
-      <Drawer.Screen name="Weather"   component={WeatherScreen}    options={{ title: 'Weather',       drawerIcon: () => '🌤️ ' }} />
-      <Drawer.Screen name="Calendar"  component={CalendarScreen}   options={{ title: 'Crop Calendar', drawerIcon: () => '📅 ' }} />
-      <Drawer.Screen name="Soil"      component={SoilScreen}       options={{ title: 'Soil Analysis', drawerIcon: () => '🧪 ' }} />
-      <Drawer.Screen name="Profile"   component={ProfileScreen}    options={{ title: 'My Profile',    drawerIcon: () => '👤 ' }} />
+      <Drawer.Screen name="Dashboard" component={DashboardScreen}  options={{ title: 'Dashboard',     drawerIcon: () => <Text>📊</Text> }} />
+      <Drawer.Screen name="Farms"     component={FarmsStack}       options={{ title: 'My Farms',      drawerIcon: () => <Text>🏡</Text>, headerShown: false }} />
+      <Drawer.Screen name="Crops"     component={CropsStack}       options={{ title: 'Crops',         drawerIcon: () => <Text>🌿</Text>, headerShown: false }} />
+      <Drawer.Screen name="Weather"   component={WeatherScreen}    options={{ title: 'Weather',       drawerIcon: () => <Text>🌤️</Text> }} />
+      <Drawer.Screen name="Calendar"  component={CalendarScreen}   options={{ title: 'Crop Calendar', drawerIcon: () => <Text>📅</Text> }} />
+      <Drawer.Screen name="Soil"      component={SoilScreen}       options={{ title: 'Soil Analysis', drawerIcon: () => <Text>🧪</Text> }} />
+      <Drawer.Screen name="Profile"   component={ProfileScreen}    options={{ title: 'My Profile',    drawerIcon: () => <Text>👤</Text> }} />
     </Drawer.Navigator>
   );
 }

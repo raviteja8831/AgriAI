@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
-import { Text, Card, TextInput, Button, Avatar, Divider, ActivityIndicator, SegmentedButtons, Menu } from 'react-native-paper';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Text, Card, TextInput, Button, Avatar, Divider, ActivityIndicator, Menu } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMutation } from '@tanstack/react-query';
 import { useSnackbar } from '../components/SnackbarProvider';
 import { authAPI } from '../api';
-import { logout, updateUser } from '../store/authSlice';
+import { updateUser } from '../store/authSlice';
 import { colors } from '../utils/theme';
 import { BASE_URL } from '../utils/api';
 import { capitalize } from '../utils/format';
@@ -17,7 +17,7 @@ export default function ProfileScreen({ navigation }) {
   const dispatch = useDispatch();
   const snack = useSnackbar();
   const { user } = useSelector((s) => s.auth);
-  const [profileForm, setProfileForm] = useState({ name: user?.name || '', email: user?.email || '', language: user?.language || 'en' });
+  const [profileForm, setProfileForm] = useState({ name: user?.name || '', email: user?.email || '' });
   const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm: '' });
   const [avatarMenuVisible, setAvatarMenuVisible] = useState(false);
   const [pwFormOpen, setPwFormOpen] = useState(false);
@@ -91,7 +91,6 @@ export default function ProfileScreen({ navigation }) {
     uploadAvatarAsset(result.assets[0]);
   };
 
-  const handleLogout = () => Alert.alert('Logout', 'Are you sure you want to logout?', [{ text: 'Cancel' }, { text: 'Logout', style: 'destructive', onPress: () => dispatch(logout()) }]);
   const handlePwChange = () => {
     if (user?.has_password && !pwForm.current_password) return snack.showError('Please enter your current password');
     if (pwForm.new_password.length < 8) return snack.showError('Password must be at least 8 characters');
@@ -105,7 +104,7 @@ export default function ProfileScreen({ navigation }) {
     if (!EMAIL_RE.test(profileForm.email.trim())) return snack.showError('Please enter a valid email address');
     const form = { ...profileForm, name: capitalize(profileForm.name) };
     setProfileForm(form);
-    profileMut.mutate(form);
+    profileMut.mutate({ ...form, language: user?.language });
   };
 
   return (
@@ -140,13 +139,6 @@ export default function ProfileScreen({ navigation }) {
         <Card.Content>
           <TextInput label="Full Name" value={profileForm.name} onChangeText={setP('name')} mode="outlined" style={styles.input} />
           <TextInput label="Email" value={profileForm.email} onChangeText={setP('email')} keyboardType="email-address" mode="outlined" style={styles.input} />
-          <Text style={styles.langLabel}>Language</Text>
-          <SegmentedButtons
-            value={profileForm.language}
-            onValueChange={setP('language')}
-            buttons={[{ value: 'en', label: 'English' }, { value: 'hi', label: 'हिंदी' }, { value: 'te', label: 'తెలుగు' }]}
-            style={{ marginBottom: 12 }}
-          />
           <Button mode="contained" loading={profileMut.isPending} onPress={handleSaveProfile} style={styles.btn}>Save Changes</Button>
         </Card.Content>
       </Card>
@@ -181,11 +173,7 @@ export default function ProfileScreen({ navigation }) {
         </Card.Content>
       </Card>
 
-      <Card style={[styles.card, { marginBottom: 32 }]}>
-        <Card.Content>
-          <Button mode="outlined" textColor={colors.error} icon="logout" onPress={handleLogout}>Logout</Button>
-        </Card.Content>
-      </Card>
+      <View style={{ height: 32 }} />
     </ScrollView>
   );
 }
@@ -205,7 +193,6 @@ const styles = StyleSheet.create({
   role: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2 },
   card: { margin: 12, marginBottom: 0, borderRadius: 12 },
   input: { marginBottom: 10, backgroundColor: colors.surface },
-  langLabel: { color: colors.textSecondary, marginBottom: 8, fontSize: 13 },
   pwHint: { color: colors.textSecondary, fontSize: 13, marginBottom: 12 },
   btn: { marginTop: 4, borderRadius: 8 },
 });

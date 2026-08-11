@@ -19,7 +19,7 @@ export default function DrawerContent(props) {
 
   return (
     <View style={styles.root}>
-      <DrawerContentScrollView {...props} contentContainerStyle={styles.container}>
+      <DrawerContentScrollView {...props} style={{ flex: 1 }} contentContainerStyle={styles.container}>
         <View style={styles.profileCard}>
           {user?.profile_image ? (
             <Avatar.Image size={80} source={{ uri: `${BASE_URL.replace('/api', '')}${user.profile_image}` }} style={styles.avatar} />
@@ -39,7 +39,7 @@ export default function DrawerContent(props) {
         <Divider style={{ marginTop: 16, marginBottom: 4 }} />
         <DrawerItemList {...props} />
       </DrawerContentScrollView>
-      <TouchableOpacity style={styles.logoutBtn} onPress={() => dispatch(logout())}>
+      <TouchableOpacity style={styles.logoutBtn} onPress={() => dispatch(logout())} activeOpacity={0.85}>
         <Text style={styles.logoutText}>🚪 Logout</Text>
       </TouchableOpacity>
     </View>
@@ -48,7 +48,7 @@ export default function DrawerContent(props) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff' },
-  container: { flexGrow: 1, paddingTop: 0, backgroundColor: '#fff' },
+  container: { flexGrow: 1, paddingTop: 0, paddingBottom: 90, backgroundColor: '#fff' },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -63,6 +63,9 @@ const styles = StyleSheet.create({
   updateProfileWrapPressed: { backgroundColor: colors.info + '20' },
   updateProfile: { color: colors.info, fontSize: 12, fontWeight: '600' },
   updateProfilePressed: { textDecorationLine: 'underline' },
-  logoutBtn: { position: 'absolute', bottom: '20%', left: 0, right: 0, alignItems: 'center', padding: 16, borderTopWidth: 1, borderTopColor: colors.border },
-  logoutText: { color: colors.error, fontSize: 16, fontWeight: '600' },
+  logoutBtn: {
+    position: 'absolute', bottom: '10%', left: 16, right: 16, alignItems: 'center',
+    paddingVertical: 12, borderRadius: 10, backgroundColor: colors.info,
+  },
+  logoutText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });

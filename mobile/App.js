@@ -30,6 +30,10 @@ import WeatherScreen from './src/screens/WeatherScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import SoilScreen from './src/screens/SoilScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import CommunicationSettingsScreen from './src/screens/CommunicationSettingsScreen';
+import TermsScreen from './src/screens/TermsScreen';
+import ContactScreen from './src/screens/ContactScreen';
+import AboutScreen from './src/screens/AboutScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -46,10 +50,19 @@ const MenuButton = ({ navigation }) => (
   </TouchableOpacity>
 );
 
-// Back arrow — shown on the Profile screen so it doesn't dead-end without a way back to Dashboard
+// Hamburger menu — shown on the Profile screen. Switches the drawer's active route to
+// Dashboard first, then opens the sidebar on top of it — so picking a menu item
+// navigates there as usual, but dismissing the drawer (tap outside/swipe) reveals
+// Dashboard instead of landing back on Profile.
 const BackButton = ({ navigation }) => (
-  <TouchableOpacity onPress={() => navigation.navigate('Dashboard')} style={{ paddingHorizontal: 16 }}>
-    <Text style={{ color: '#fff', fontSize: 22 }}>←</Text>
+  <TouchableOpacity
+    onPress={() => {
+      navigation.navigate('Dashboard');
+      navigation.openDrawer();
+    }}
+    style={{ paddingHorizontal: 16 }}
+  >
+    <Text style={{ color: '#fff', fontSize: 22 }}>☰</Text>
   </TouchableOpacity>
 );
 
@@ -109,6 +122,10 @@ function AppDrawer() {
       <Drawer.Screen name="Weather"   component={WeatherScreen}    options={{ title: 'Weather',       drawerIcon: () => <Text>🌤️</Text> }} />
       <Drawer.Screen name="Calendar"  component={CalendarScreen}   options={{ title: 'Crop Calendar', drawerIcon: () => <Text>📅</Text> }} />
       <Drawer.Screen name="Soil"      component={SoilScreen}       options={{ title: 'Soil Analysis', drawerIcon: () => <Text>🧪</Text> }} />
+      <Drawer.Screen name="Communication" component={CommunicationSettingsScreen} options={{ title: 'Communication Settings', drawerIcon: () => <Text>💬</Text> }} />
+      <Drawer.Screen name="Terms"     component={TermsScreen}      options={{ title: 'Terms & Conditions', drawerIcon: () => <Text>📄</Text> }} />
+      <Drawer.Screen name="Contact"   component={ContactScreen}    options={{ title: 'Contact Us',    drawerIcon: () => <Text>📩</Text> }} />
+      <Drawer.Screen name="About"     component={AboutScreen}      options={{ title: 'About App',     drawerIcon: () => <Text>ℹ️</Text> }} />
       <Drawer.Screen
         name="Profile"
         component={ProfileScreen}

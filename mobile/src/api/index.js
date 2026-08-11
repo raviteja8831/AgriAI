@@ -7,6 +7,9 @@ export const authAPI = {
   setupProfile: (data) => api.post('/auth/setup', data),
   getMe: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
+  uploadAvatar: (formData) => api.put('/auth/profile-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
   changePassword: (data) => api.put('/auth/change-password', data),
   // Legacy password login (admin/web)
   login: (data) => api.post('/auth/login', data),

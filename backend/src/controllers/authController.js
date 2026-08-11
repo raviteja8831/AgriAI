@@ -1,6 +1,24 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const User = require('../models/User');
+
+const uploadDir = path.join(__dirname, '../../uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => cb(null, `avatar_${req.user.id}_${Date.now()}${path.extname(file.originalname)}`),
+});
+
+const avatarFileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) cb(null, true);
+  else cb(new Error('Only image files allowed'), false);
+};
+
+exports.avatarUpload = multer({ storage: avatarStorage, fileFilter: avatarFileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 const signToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
@@ -83,6 +101,17 @@ exports.updateProfile = async (req, res) => {
     res.json({ success: true, message: 'Profile updated' });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Update failed' });
+  }
+};
+
+exports.updateAvatar = async (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, message: 'No image uploaded' });
+  try {
+    const imageUrl = `/uploads/${req.file.filename}`;
+    await req.user.update({ profile_image: imageUrl });
+    res.json({ success: true, profile_image: imageUrl });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to update profile photo' });
   }
 };
 

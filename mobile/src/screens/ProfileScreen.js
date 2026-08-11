@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import { Text, Card, TextInput, Button, Avatar, Divider, ActivityIndicator, SegmentedButtons } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMutation } from '@tanstack/react-query';
 import { useSnackbar } from '../components/SnackbarProvider';
 import { authAPI } from '../api';
 import { logout, updateUser } from '../store/authSlice';
 import { colors } from '../utils/theme';
+import { BASE_URL } from '../utils/api';
 
 export default function ProfileScreen({ navigation }) {
   const dispatch = useDispatch();
@@ -25,6 +27,27 @@ export default function ProfileScreen({ navigation }) {
     onSuccess: () => { setPwForm({ current_password: '', new_password: '', confirm: '' }); snack.showSuccess('Password changed!'); },
   });
 
+  const avatarMut = useMutation({
+    mutationFn: authAPI.uploadAvatar,
+    onSuccess: (res) => { dispatch(updateUser({ profile_image: res.data.profile_image })); snack.showSuccess('Profile photo updated!'); },
+  });
+
+  const handlePickAvatar = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') return snack.showWarning('Permission denied — please allow photo access in Settings');
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7, allowsEditing: true, aspect: [1, 1] });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    const fd = new FormData();
+    if (Platform.OS === 'web') {
+      const blob = await (await fetch(asset.uri)).blob();
+      fd.append('avatar', blob, asset.fileName || 'avatar.jpg');
+    } else {
+      fd.append('avatar', { uri: asset.uri, type: 'image/jpeg', name: 'avatar.jpg' });
+    }
+    avatarMut.mutate(fd);
+  };
+
   const handleLogout = () => Alert.alert('Logout', 'Are you sure you want to logout?', [{ text: 'Cancel' }, { text: 'Logout', style: 'destructive', onPress: () => dispatch(logout()) }]);
   const handlePwChange = () => {
     if (pwForm.new_password !== pwForm.confirm) return snack.showError('Passwords do not match');
@@ -37,7 +60,16 @@ export default function ProfileScreen({ navigation }) {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Avatar.Text size={72} label={user?.name?.[0]?.toUpperCase() || 'F'} style={styles.avatar} />
+        <TouchableOpacity onPress={handlePickAvatar} activeOpacity={0.7} disabled={avatarMut.isPending}>
+          {user?.profile_image ? (
+            <Avatar.Image size={72} source={{ uri: `${BASE_URL.replace('/api', '')}${user.profile_image}` }} style={styles.avatar} />
+          ) : (
+            <Avatar.Text size={72} label={user?.name?.[0]?.toUpperCase() || 'F'} style={styles.avatar} />
+          )}
+          <View style={styles.avatarEditBadge}>
+            {avatarMut.isPending ? <ActivityIndicator size={12} color="#fff" /> : <Text style={styles.avatarEditIcon}>📷</Text>}
+          </View>
+        </TouchableOpacity>
         <Text variant="titleLarge" style={styles.name}>{user?.name}</Text>
         <Text style={styles.phone}>{user?.phone}</Text>
         <Text style={styles.role}>{user?.role?.toUpperCase()}</Text>
@@ -82,6 +114,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   header: { backgroundColor: colors.primary, padding: 32, alignItems: 'center' },
   avatar: { backgroundColor: colors.secondary, marginBottom: 12 },
+  avatarEditBadge: {
+    position: 'absolute', bottom: 12, right: -2, width: 24, height: 24, borderRadius: 12,
+    backgroundColor: colors.info, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: colors.primary,
+  },
+  avatarEditIcon: { fontSize: 11 },
   name: { color: '#fff', fontWeight: '700' },
   phone: { color: 'rgba(255,255,255,0.8)', marginTop: 4 },
   role: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2 },

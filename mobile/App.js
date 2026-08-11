@@ -142,7 +142,11 @@ function RootNavigator() {
     && (user.name === user.phone || !user.name);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      documentTitle={{
+        formatter: (options, route) => options?.title ?? route?.name ?? 'AgriAI — Smart Farming',
+      }}
+    >
       {!introSeen ? (
         <IntroScreen onDone={finishIntro} />
       ) : !isAuthenticated ? (

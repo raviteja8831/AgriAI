@@ -18,13 +18,16 @@ export default function ProfileScreen({ navigation }) {
   const snack = useSnackbar();
   const { user } = useSelector((s) => s.auth);
   const [profileForm, setProfileForm] = useState({ name: user?.name || '', email: user?.email || '' });
+  const [savedProfile, setSavedProfile] = useState({ name: user?.name || '', email: user?.email || '' });
   const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm: '' });
   const [avatarMenuVisible, setAvatarMenuVisible] = useState(false);
   const [pwFormOpen, setPwFormOpen] = useState(false);
+  const [pwVisible, setPwVisible] = useState({ current_password: false, new_password: false, confirm: false });
+  const togglePwVisible = (f) => setPwVisible((p) => ({ ...p, [f]: !p[f] }));
 
   const profileMut = useMutation({
     mutationFn: authAPI.updateProfile,
-    onSuccess: () => { dispatch(updateUser(profileForm)); snack.showSuccess('Profile updated!'); },
+    onSuccess: () => { dispatch(updateUser(profileForm)); setSavedProfile(profileForm); snack.showSuccess('Profile updated!'); },
   });
 
   const pwMut = useMutation({
@@ -32,6 +35,7 @@ export default function ProfileScreen({ navigation }) {
     onSuccess: () => {
       dispatch(updateUser({ has_password: true }));
       setPwForm({ current_password: '', new_password: '', confirm: '' });
+      setPwVisible({ current_password: false, new_password: false, confirm: false });
       setPwFormOpen(false);
       snack.showSuccess(user?.has_password ? 'Password changed!' : 'Password set!');
     },
@@ -98,6 +102,9 @@ export default function ProfileScreen({ navigation }) {
     pwMut.mutate({ current_password: pwForm.current_password, new_password: pwForm.new_password });
   };
 
+  const profileDirty = profileForm.name !== savedProfile.name || profileForm.email !== savedProfile.email;
+  const pwValid = (!user?.has_password || pwForm.current_password) && pwForm.new_password.length >= 8 && pwForm.new_password === pwForm.confirm;
+
   const setP = (f) => (v) => setProfileForm((p) => ({ ...p, [f]: v }));
   const setPw = (f) => (v) => setPwForm((p) => ({ ...p, [f]: v }));
   const handleSaveProfile = () => {
@@ -139,7 +146,7 @@ export default function ProfileScreen({ navigation }) {
         <Card.Content>
           <TextInput label="Full Name" value={profileForm.name} onChangeText={setP('name')} mode="outlined" style={styles.input} />
           <TextInput label="Email" value={profileForm.email} onChangeText={setP('email')} keyboardType="email-address" mode="outlined" style={styles.input} />
-          <Button mode="contained" loading={profileMut.isPending} onPress={handleSaveProfile} style={styles.btn}>Save Changes</Button>
+          <Button mode="contained" loading={profileMut.isPending} disabled={!profileDirty || profileMut.isPending} onPress={handleSaveProfile} style={styles.btn}>Save Changes</Button>
         </Card.Content>
       </Card>
 
@@ -156,14 +163,38 @@ export default function ProfileScreen({ navigation }) {
                 <Text style={styles.pwHint}>You signed in with OTP and don't have a password yet. Set one here if you'd like the option to log in with a password too.</Text>
               )}
               {user?.has_password && (
-                <TextInput label="Current Password" value={pwForm.current_password} onChangeText={setPw('current_password')} secureTextEntry mode="outlined" style={styles.input} />
+                <TextInput
+                  label="Current Password"
+                  value={pwForm.current_password}
+                  onChangeText={setPw('current_password')}
+                  secureTextEntry={!pwVisible.current_password}
+                  mode="outlined"
+                  style={styles.input}
+                  right={<TextInput.Icon icon={pwVisible.current_password ? 'eye-off' : 'eye'} onPress={() => togglePwVisible('current_password')} forceTextInputFocus={false} />}
+                />
               )}
-              <TextInput label="New Password" value={pwForm.new_password} onChangeText={setPw('new_password')} secureTextEntry mode="outlined" style={styles.input} />
-              <TextInput label="Confirm New Password" value={pwForm.confirm} onChangeText={setPw('confirm')} secureTextEntry mode="outlined" style={styles.input} />
-              <Button mode="contained" buttonColor={colors.secondary} loading={pwMut.isPending} onPress={handlePwChange} style={styles.btn}>{user?.has_password ? 'Change Password' : 'Set Password'}</Button>
+              <TextInput
+                label="New Password"
+                value={pwForm.new_password}
+                onChangeText={setPw('new_password')}
+                secureTextEntry={!pwVisible.new_password}
+                mode="outlined"
+                style={styles.input}
+                right={<TextInput.Icon icon={pwVisible.new_password ? 'eye-off' : 'eye'} onPress={() => togglePwVisible('new_password')} forceTextInputFocus={false} />}
+              />
+              <TextInput
+                label="Confirm New Password"
+                value={pwForm.confirm}
+                onChangeText={setPw('confirm')}
+                secureTextEntry={!pwVisible.confirm}
+                mode="outlined"
+                style={styles.input}
+                right={<TextInput.Icon icon={pwVisible.confirm ? 'eye-off' : 'eye'} onPress={() => togglePwVisible('confirm')} forceTextInputFocus={false} />}
+              />
+              <Button mode="contained" buttonColor={colors.secondary} loading={pwMut.isPending} disabled={!pwValid || pwMut.isPending} onPress={handlePwChange} style={styles.btn}>{user?.has_password ? 'Change Password' : 'Set Password'}</Button>
               <Button
                 mode="text"
-                onPress={() => { setPwFormOpen(false); setPwForm({ current_password: '', new_password: '', confirm: '' }); }}
+                onPress={() => { setPwFormOpen(false); setPwForm({ current_password: '', new_password: '', confirm: '' }); setPwVisible({ current_password: false, new_password: false, confirm: false }); }}
                 style={styles.btn}
               >
                 Cancel

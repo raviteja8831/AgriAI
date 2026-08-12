@@ -17,8 +17,9 @@ router.post('/setup', authenticate, ctrl.setupProfile);
 
 router.get('/me', authenticate, ctrl.getMe);
 router.put('/profile', authenticate, ctrl.updateProfile);
+router.put('/profile-image', authenticate, ctrl.avatarUpload.single('avatar'), ctrl.updateAvatar);
 router.put('/change-password', authenticate, [
-  body('current_password').notEmpty(),
+  body('current_password').optional({ checkFalsy: true }).isString(),
   body('new_password').isLength({ min: 6 }),
 ], ctrl.changePassword);
 

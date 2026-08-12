@@ -35,7 +35,8 @@ export default function StayConnectedScreen() {
         </View>
       </View>
       <View style={styles.footer}>
-        <Button mode="contained" style={styles.btn} contentStyle={styles.btnContent} onPress={handleContinue}>
+        <Button mode="contained" buttonColor={colors.info} labelStyle={styles.btnLabel}
+          style={styles.btn} contentStyle={styles.btnContent} onPress={handleContinue}>
           Continue
         </Button>
       </View>
@@ -49,9 +50,10 @@ const styles = StyleSheet.create({
   emoji: { fontSize: 56, marginBottom: 16 },
   title: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 12, textAlign: 'center' },
   body: { fontSize: 14, lineHeight: 21, color: 'rgba(255,255,255,0.85)', textAlign: 'center', marginBottom: 20 },
-  checkboxRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 12, paddingRight: 16, paddingVertical: 4 },
-  checkboxLabel: { color: '#fff', fontSize: 13, flexShrink: 1 },
+  checkboxRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, paddingRight: 16, paddingVertical: 4 },
+  checkboxLabel: { color: colors.textPrimary, fontSize: 13, flexShrink: 1 },
   footer: { padding: 24, paddingBottom: 40 },
   btn: { borderRadius: 12 },
-  btnContent: { paddingVertical: 8 },
+  btnContent: { paddingVertical: 10 },
+  btnLabel: { fontSize: 17, fontWeight: '700' },
 });

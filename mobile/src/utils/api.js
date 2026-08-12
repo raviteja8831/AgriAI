@@ -32,7 +32,7 @@ export const setAuthToken = (token) => { currentToken = token; };
 // ── Request: attach JWT ───────────────────────────────────────────────────────
 api.interceptors.request.use(async (config) => {
   const token = currentToken ?? (await AsyncStorage.getItem('token'));
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token && token !== 'undefined' && token !== 'null') config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 

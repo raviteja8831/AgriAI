@@ -65,7 +65,9 @@ app.use('/api/market', marketRoutes);
 app.use('/api/soil', soilRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+  setHeaders: (res) => res.set('Cross-Origin-Resource-Policy', 'cross-origin'),
+}));
 
 app.use((err, req, res, next) => {
   console.error(err.stack);

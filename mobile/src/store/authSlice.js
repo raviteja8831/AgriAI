@@ -30,7 +30,7 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.loaded = true;
       setAuthToken(payload.token);
-      AsyncStorage.setItem('token', payload.token).catch(() => {});
+      if (payload.token) AsyncStorage.setItem('token', payload.token).catch(() => {});
       AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(() => {});
     },
     // Marks that the user just completed the login action (as opposed to

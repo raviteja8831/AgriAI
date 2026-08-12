@@ -1,13 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
-import { Text, ActivityIndicator } from 'react-native-paper';
-import { useSelector } from 'react-redux';
-import { useQuery } from '@tanstack/react-query';
+import { Text, ActivityIndicator, Portal, Modal, RadioButton, Button } from 'react-native-paper';
+import { useDispatch, useSelector } from 'react-redux';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import TodayBriefCard from '../components/TodayBriefCard';
 import MarketPriceCard from '../components/MarketPriceCard';
 import CropProgressCard from '../components/CropProgressCard';
 import api from '../utils/api';
+import { authAPI } from '../api';
+import { updateUser } from '../store/authSlice';
+import { useSnackbar } from '../components/SnackbarProvider';
 import { colors } from '../utils/theme';
+import { capitalize } from '../utils/format';
+
+const LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'हिंदी' },
+  { code: 'te', label: 'తెలుగు' },
+];
 
 const QuickStat = ({ emoji, label, value, sub, onPress, alert }) => (
   <TouchableOpacity style={[styles.statBox, alert && styles.statBoxAlert]} onPress={onPress} activeOpacity={0.8}>
@@ -58,7 +68,34 @@ const SeasonPL = ({ expenses, revenue, profit }) => (
 );
 
 export default function DashboardScreen({ navigation }) {
+  const dispatch = useDispatch();
+  const snack = useSnackbar();
   const { user } = useSelector((s) => s.auth);
+  const [langModalVisible, setLangModalVisible] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(user?.language || 'en');
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => setLangModalVisible(true)} style={{ paddingHorizontal: 16 }}>
+          <Text style={{ fontSize: 20 }}>🌐</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
+  const langMut = useMutation({
+    mutationFn: authAPI.updateProfile,
+    onSuccess: () => {
+      dispatch(updateUser({ language: selectedLang }));
+      setLangModalVisible(false);
+      snack.showSuccess('Language updated!');
+    },
+  });
+
+  const handleSaveLang = () => {
+    langMut.mutate({ name: user?.name, email: user?.email, language: selectedLang });
+  };
 
   const { data: dash, isLoading, refetch, isFetching } = useQuery({
     queryKey: ['dashboard'],
@@ -88,9 +125,10 @@ export default function DashboardScreen({ navigation }) {
   const pestRisk = dash?.pest_risk;
   const prices = marketData?.prices || [];
 
-  const firstName = user?.name?.split(' ')[0] || 'Farmer';
+  const firstName = capitalize(user?.name?.split(' ')[0]) || 'Farmer';
 
   return (
+    <>
     <ScrollView
       style={styles.screen}
       contentContainerStyle={styles.content}
@@ -156,6 +194,22 @@ export default function DashboardScreen({ navigation }) {
 
       <View style={{ height: 32 }} />
     </ScrollView>
+
+    <Portal>
+      <Modal visible={langModalVisible} onDismiss={() => setLangModalVisible(false)} contentContainerStyle={styles.langModal}>
+        <Text variant="titleLarge" style={styles.langModalTitle}>Select Language</Text>
+        <RadioButton.Group onValueChange={setSelectedLang} value={selectedLang}>
+          {LANGUAGES.map((l) => (
+            <RadioButton.Item key={l.code} label={l.label} value={l.code} color={colors.primary} />
+          ))}
+        </RadioButton.Group>
+        <View style={styles.langModalBtns}>
+          <Button mode="outlined" onPress={() => setLangModalVisible(false)} style={[styles.langBtn, { marginRight: 8 }]}>Cancel</Button>
+          <Button mode="contained" loading={langMut.isPending} onPress={handleSaveLang} style={styles.langBtn}>Save</Button>
+        </View>
+      </Modal>
+    </Portal>
+    </>
   );
 }
 
@@ -195,4 +249,8 @@ const styles = StyleSheet.create({
   addFarmEmoji: { fontSize: 36 },
   addFarmTitle: { fontSize: 16, fontWeight: '700', color: colors.info },
   addFarmSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  langModal: { backgroundColor: colors.surface, margin: 16, padding: 20, borderRadius: 16 },
+  langModalTitle: { fontWeight: '700', color: colors.primary, marginBottom: 8 },
+  langModalBtns: { flexDirection: 'row', marginTop: 12 },
+  langBtn: { flex: 1 },
 });

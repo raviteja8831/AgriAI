@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SnackbarProvider } from './src/components/SnackbarProvider';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
+import { View, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Text } from 'react-native-paper';
 
 import store from './src/store';
@@ -30,6 +30,10 @@ import WeatherScreen from './src/screens/WeatherScreen';
 import CalendarScreen from './src/screens/CalendarScreen';
 import SoilScreen from './src/screens/SoilScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import CommunicationSettingsScreen from './src/screens/CommunicationSettingsScreen';
+import TermsScreen from './src/screens/TermsScreen';
+import ContactScreen from './src/screens/ContactScreen';
+import AboutScreen from './src/screens/AboutScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -42,6 +46,22 @@ const headerTitleStyle = { fontWeight: '700' };
 // Hamburger menu button — shown in nested Stack screens so user can still open drawer
 const MenuButton = ({ navigation }) => (
   <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ paddingHorizontal: 16 }}>
+    <Text style={{ color: '#fff', fontSize: 22 }}>☰</Text>
+  </TouchableOpacity>
+);
+
+// Hamburger menu — shown on the Profile screen. Switches the drawer's active route to
+// Dashboard first, then opens the sidebar on top of it — so picking a menu item
+// navigates there as usual, but dismissing the drawer (tap outside/swipe) reveals
+// Dashboard instead of landing back on Profile.
+const BackButton = ({ navigation }) => (
+  <TouchableOpacity
+    onPress={() => {
+      navigation.navigate('Dashboard');
+      navigation.openDrawer();
+    }}
+    style={{ paddingHorizontal: 16 }}
+  >
     <Text style={{ color: '#fff', fontSize: 22 }}>☰</Text>
   </TouchableOpacity>
 );
@@ -82,9 +102,6 @@ function CropsStack({ navigation }) {
 }
 
 function AppDrawer() {
-  // On wide web screens, show permanent drawer (sidebar); on mobile, slide-over
-  const drawerType = Platform.OS === 'web' ? 'permanent' : 'slide';
-
   return (
     <Drawer.Navigator
       drawerContent={(props) => <DrawerContent {...props} />}
@@ -92,20 +109,32 @@ function AppDrawer() {
         headerStyle,
         headerTintColor,
         headerTitleStyle,
-        drawerType,
-        drawerStyle: Platform.OS === 'web' ? { width: 240 } : undefined,
+        drawerType: 'front',
+        drawerStyle: { width: '80%', borderTopRightRadius: 24, borderBottomRightRadius: 24, overflow: 'hidden' },
         drawerActiveBackgroundColor: colors.primaryLight + '30',
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.textPrimary,
       }}
     >
-      <Drawer.Screen name="Dashboard" component={DashboardScreen}  options={{ title: 'Dashboard',     drawerIcon: () => '📊 ' }} />
-      <Drawer.Screen name="Farms"     component={FarmsStack}       options={{ title: 'My Farms',      drawerIcon: () => '🏡 ', headerShown: false }} />
-      <Drawer.Screen name="Crops"     component={CropsStack}       options={{ title: 'Crops',         drawerIcon: () => '🌿 ', headerShown: false }} />
-      <Drawer.Screen name="Weather"   component={WeatherScreen}    options={{ title: 'Weather',       drawerIcon: () => '🌤️ ' }} />
-      <Drawer.Screen name="Calendar"  component={CalendarScreen}   options={{ title: 'Crop Calendar', drawerIcon: () => '📅 ' }} />
-      <Drawer.Screen name="Soil"      component={SoilScreen}       options={{ title: 'Soil Analysis', drawerIcon: () => '🧪 ' }} />
-      <Drawer.Screen name="Profile"   component={ProfileScreen}    options={{ title: 'My Profile',    drawerIcon: () => '👤 ' }} />
+      <Drawer.Screen name="Dashboard" component={DashboardScreen}  options={{ title: 'Dashboard',     drawerIcon: () => <Text>📊</Text> }} />
+      <Drawer.Screen name="Farms"     component={FarmsStack}       options={{ title: 'My Farms',      drawerIcon: () => <Text>🏡</Text>, headerShown: false }} />
+      <Drawer.Screen name="Crops"     component={CropsStack}       options={{ title: 'Crops',         drawerIcon: () => <Text>🌿</Text>, headerShown: false }} />
+      <Drawer.Screen name="Weather"   component={WeatherScreen}    options={{ title: 'Weather',       drawerIcon: () => <Text>🌤️</Text> }} />
+      <Drawer.Screen name="Calendar"  component={CalendarScreen}   options={{ title: 'Crop Calendar', drawerIcon: () => <Text>📅</Text> }} />
+      <Drawer.Screen name="Soil"      component={SoilScreen}       options={{ title: 'Soil Analysis', drawerIcon: () => <Text>🧪</Text> }} />
+      <Drawer.Screen name="Communication" component={CommunicationSettingsScreen} options={{ title: 'Communication Settings', drawerIcon: () => <Text>💬</Text> }} />
+      <Drawer.Screen name="Terms"     component={TermsScreen}      options={{ title: 'Terms & Conditions', drawerIcon: () => <Text>📄</Text> }} />
+      <Drawer.Screen name="Contact"   component={ContactScreen}    options={{ title: 'Contact Us',    drawerIcon: () => <Text>📩</Text> }} />
+      <Drawer.Screen name="About"     component={AboutScreen}      options={{ title: 'About App',     drawerIcon: () => <Text>ℹ️</Text> }} />
+      <Drawer.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={({ navigation }) => ({
+          title: 'My Profile',
+          drawerIcon: () => <Text>👤</Text>,
+          headerLeft: () => <BackButton navigation={navigation} />,
+        })}
+      />
     </Drawer.Navigator>
   );
 }
@@ -145,7 +174,11 @@ function RootNavigator() {
     && (user.name === user.phone || !user.name);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      documentTitle={{
+        formatter: (options, route) => options?.title ?? route?.name ?? 'AgriAI — Smart Farming',
+      }}
+    >
       {!introSeen ? (
         <IntroScreen onDone={finishIntro} />
       ) : !isAuthenticated ? (

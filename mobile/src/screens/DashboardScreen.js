@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
-import { Text, ActivityIndicator, Portal, Modal, RadioButton, Button } from 'react-native-paper';
+import { Text, ActivityIndicator, Portal, Modal, RadioButton, Button, Searchbar } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import TodayBriefCard from '../components/TodayBriefCard';
 import MarketPriceCard from '../components/MarketPriceCard';
 import CropProgressCard from '../components/CropProgressCard';
 import api from '../utils/api';
-import { authAPI } from '../api';
+import { authAPI, notificationsAPI } from '../api';
 import { updateUser } from '../store/authSlice';
 import { useSnackbar } from '../components/SnackbarProvider';
 import { colors } from '../utils/theme';
@@ -73,16 +73,45 @@ export default function DashboardScreen({ navigation }) {
   const { user } = useSelector((s) => s.auth);
   const [langModalVisible, setLangModalVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState(user?.language || 'en');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Shared with NotificationsScreen's ['notifications'] query — navigating there shows
+  // this cached unread count instantly while it refetches in the background.
+  const { data: notifData } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => notificationsAPI.getAll().then((r) => r.data),
+  });
+  const unreadCount = notifData?.unread || 0;
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
+      headerTitle: () => (
+        <Searchbar
+          placeholder="Search"
+          placeholderTextColor="#ffffffcc"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          style={styles.headerSearch}
+          inputStyle={styles.headerSearchInput}
+          icon="magnify"
+          iconColor="#fff"
+          rippleColor="#ffffff30"
+        />
+      ),
+      headerTitleContainerStyle: styles.headerTitleContainer,
       headerRight: () => (
-        <TouchableOpacity onPress={() => setLangModalVisible(true)} style={{ paddingHorizontal: 16 }}>
-          <Text style={{ fontSize: 20 }}>🌐</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.bellButton}>
+            <Text style={{ fontSize: 20 }}>🔔</Text>
+            {unreadCount > 0 && <View style={styles.notifBadge} />}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setLangModalVisible(true)} style={{ paddingHorizontal: 16 }}>
+            <Text style={{ fontSize: 20 }}>🌐</Text>
+          </TouchableOpacity>
+        </View>
       ),
     });
-  }, [navigation]);
+  }, [navigation, searchQuery, unreadCount]);
 
   const langMut = useMutation({
     mutationFn: authAPI.updateProfile,
@@ -214,6 +243,11 @@ export default function DashboardScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  headerTitleContainer: { flex: 1, marginHorizontal: 8 },
+  headerSearch: { height: 40, borderRadius: 20, backgroundColor: '#ffffff30', elevation: 0 },
+  headerSearchInput: { fontSize: 14, minHeight: 0, alignSelf: 'center', color: '#fff' },
+  bellButton: { paddingHorizontal: 12, position: 'relative' },
+  notifBadge: { position: 'absolute', top: 2, right: 8, width: 9, height: 9, borderRadius: 4.5, backgroundColor: colors.error, borderWidth: 1, borderColor: colors.primary },
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: 14 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },

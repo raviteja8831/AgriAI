@@ -10,6 +10,7 @@ import { Text, Avatar, Divider } from "react-native-paper";
 import {
   DrawerContentScrollView,
   DrawerItemList,
+  useDrawerStatus,
 } from "@react-navigation/drawer";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/authSlice";
@@ -23,6 +24,11 @@ export default function DrawerContent(props) {
   const { user } = useSelector((s) => s.auth);
   const [cashbackBalance, setCashbackBalance] = useState(null);
   const [coinsBalance, setCoinsBalance] = useState(null);
+  const drawerStatus = useDrawerStatus();
+
+  useEffect(() => {
+    props.onDrawerOpenChange?.(drawerStatus === "open");
+  }, [drawerStatus]);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,8 +118,8 @@ export default function DrawerContent(props) {
         </Pressable>
         <Pressable onPress={goTo("WinAssured")} style={styles.rewardRow}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.rewardLabel}>Win assured ₹100</Text>
-            <Text style={styles.rewardSubtext}>🎁 Refer & Earn</Text>
+            <Text style={styles.rewardLabel}>🎁 Refer & Earn</Text>
+            <Text style={styles.rewardSubtext}>Refer & Win assured ₹100</Text>
           </View>
           <Text style={styles.rewardArrow}>›</Text>
         </Pressable>
@@ -189,7 +195,7 @@ const styles = StyleSheet.create({
   },
   rewardSubtext: {
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "400",
     color: colors.secondary,
     marginTop: 2,
   },

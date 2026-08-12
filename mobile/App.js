@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { Provider as ReduxProvider, useDispatch, useSelector } from 'react-redux';
@@ -34,12 +35,15 @@ import CommunicationSettingsScreen from './src/screens/CommunicationSettingsScre
 import TermsScreen from './src/screens/TermsScreen';
 import ContactScreen from './src/screens/ContactScreen';
 import AboutScreen from './src/screens/AboutScreen';
+import ShopScreen from './src/screens/ShopScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
 import CoinsScreen from './src/screens/CoinsScreen';
 import WinAssuredScreen from './src/screens/WinAssuredScreen';
 import CashbackScreen from './src/screens/CashbackScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 1000 * 60 * 5 } } });
 
 const headerStyle = { backgroundColor: colors.primary };
@@ -105,7 +109,7 @@ function CropsStack({ navigation }) {
   );
 }
 
-function AppDrawer() {
+function AppDrawer({ onDrawerOpenChange }) {
   // @react-navigation/drawer computes the drawer's closed-position offset from the
   // window width at mount/layout time. On devices whose width changes at runtime
   // (foldables, Surface-style tablets resizing between multi-window/tablet mode),
@@ -117,7 +121,7 @@ function AppDrawer() {
   return (
     <Drawer.Navigator
       key={width}
-      drawerContent={(props) => <DrawerContent {...props} />}
+      drawerContent={(props) => <DrawerContent {...props} onDrawerOpenChange={onDrawerOpenChange} />}
       screenOptions={{
         headerStyle,
         headerTintColor,
@@ -135,7 +139,7 @@ function AppDrawer() {
         drawerInactiveTintColor: colors.textPrimary,
       }}
     >
-      <Drawer.Screen name="Dashboard" component={DashboardScreen}  options={{ title: 'Dashboard',     drawerIcon: () => <Text>📊</Text> }} />
+      <Drawer.Screen name="Dashboard" component={DashboardScreen}  options={{ title: 'Home',          drawerIcon: () => <Text>🏠</Text> }} />
       <Drawer.Screen name="Farms"     component={FarmsStack}       options={{ title: 'My Farms',      drawerIcon: () => <Text>🏡</Text>, headerShown: false }} />
       <Drawer.Screen name="Crops"     component={CropsStack}       options={{ title: 'Crops',         drawerIcon: () => <Text>🌿</Text>, headerShown: false }} />
       <Drawer.Screen name="Weather"   component={WeatherScreen}    options={{ title: 'Weather',       drawerIcon: () => <Text>🌤️</Text> }} />
@@ -151,6 +155,8 @@ function AppDrawer() {
       <Drawer.Screen name="Coins" component={CoinsScreen} options={{ title: 'Coins', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
       <Drawer.Screen name="WinAssured" component={WinAssuredScreen} options={{ title: 'Win Assured ₹100', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
       <Drawer.Screen name="Cashback" component={CashbackScreen} options={{ title: 'Cashback Balance', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
+      {/* Reached only via the bell icon in the Home header — see comment above. */}
+      <Drawer.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
       <Drawer.Screen
         name="Profile"
         component={ProfileScreen}
@@ -161,6 +167,57 @@ function AppDrawer() {
         })}
       />
     </Drawer.Navigator>
+  );
+}
+
+// Bottom tab bar shown above the device's system nav buttons on every main screen.
+// Home hosts the existing drawer (Farms, Weather, Calendar, etc. stay reachable via
+// the hamburger menu there); Shop and Profile are quick-access tabs alongside it.
+function RootTabs() {
+  // The drawer nested inside the Home tab reports its open/closed state up here so
+  // the tab bar can hide while the drawer is sliding out — otherwise it stays visible
+  // underneath/beside the drawer since it belongs to the outer (Tab) navigator.
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerStyle,
+        headerTintColor,
+        headerTitleStyle,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
+        tabBarStyle: drawerOpen ? { display: 'none' } : { height: 60, paddingBottom: 8, paddingTop: 6 },
+      }}
+    >
+      <Tab.Screen
+        name="HomeTab"
+        options={{
+          title: 'Home',
+          headerShown: false,
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏠</Text>,
+        }}
+      >
+        {() => <AppDrawer onDrawerOpenChange={setDrawerOpen} />}
+      </Tab.Screen>
+      <Tab.Screen
+        name="ShopTab"
+        component={ShopScreen}
+        options={{
+          title: 'Shop',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🛒</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="ProfileTab"
+        component={ProfileScreen}
+        options={{
+          title: 'My Profile',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>👤</Text>,
+        }}
+      />
+    </Tab.Navigator>
   );
 }
 
@@ -215,7 +272,7 @@ function RootNavigator() {
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         </Stack.Navigator>
       ) : (
-        <AppDrawer />
+        <RootTabs />
       )}
     </NavigationContainer>
   );

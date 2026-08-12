@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Pressable, SafeAreaView } from 'react-native';
 import { Text, Avatar, Divider } from 'react-native-paper';
 import { DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { useSelector, useDispatch } from 'react-redux';
@@ -18,7 +18,7 @@ export default function DrawerContent(props) {
   };
 
   return (
-    <View style={styles.root}>
+    <SafeAreaView style={styles.root}>
       <DrawerContentScrollView {...props} style={{ flex: 1 }} contentContainerStyle={styles.container}>
         <View style={styles.profileCard}>
           {user?.profile_image ? (
@@ -38,17 +38,17 @@ export default function DrawerContent(props) {
         </View>
         <Divider style={{ marginTop: 16, marginBottom: 4 }} />
         <DrawerItemList {...props} />
+        <TouchableOpacity style={styles.logoutBtn} onPress={() => dispatch(logout())} activeOpacity={0.85}>
+          <Text style={styles.logoutText}>🚪 Logout</Text>
+        </TouchableOpacity>
       </DrawerContentScrollView>
-      <TouchableOpacity style={styles.logoutBtn} onPress={() => dispatch(logout())} activeOpacity={0.85}>
-        <Text style={styles.logoutText}>🚪 Logout</Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff' },
-  container: { flexGrow: 1, paddingTop: 0, paddingBottom: 90, backgroundColor: '#fff' },
+  container: { flexGrow: 1, paddingTop: 0, paddingBottom: 16, backgroundColor: '#fff' },
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   updateProfile: { color: colors.info, fontSize: 12, fontWeight: '600' },
   updateProfilePressed: { textDecorationLine: 'underline' },
   logoutBtn: {
-    position: 'absolute', bottom: '10%', left: 16, right: 16, alignItems: 'center',
+    marginHorizontal: 16, marginTop: 8, marginBottom: 16, alignItems: 'center',
     paddingVertical: 12, borderRadius: 10, backgroundColor: colors.info,
   },
   logoutText: { color: '#fff', fontSize: 16, fontWeight: '600' },

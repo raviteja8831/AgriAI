@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SnackbarProvider } from './src/components/SnackbarProvider';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Text } from 'react-native-paper';
 
 import store from './src/store';
@@ -102,15 +102,30 @@ function CropsStack({ navigation }) {
 }
 
 function AppDrawer() {
+  // @react-navigation/drawer computes the drawer's closed-position offset from the
+  // window width at mount/layout time. On devices whose width changes at runtime
+  // (foldables, Surface-style tablets resizing between multi-window/tablet mode),
+  // that offset can go stale after an Android configuration change, leaving a
+  // sliver of the drawer visible even when closed. Remounting on width change
+  // forces a fresh measurement.
+  const { width } = useWindowDimensions();
+
   return (
     <Drawer.Navigator
+      key={width}
       drawerContent={(props) => <DrawerContent {...props} />}
       screenOptions={{
         headerStyle,
         headerTintColor,
         headerTitleStyle,
         drawerType: 'front',
-        drawerStyle: { width: '80%', borderTopRightRadius: 24, borderBottomRightRadius: 24, overflow: 'hidden' },
+        drawerStyle: {
+          width: '80%', borderTopRightRadius: 24, borderBottomRightRadius: 24, overflow: 'hidden',
+          // Android draws elevation shadow outside the view's own bounds, so it isn't
+          // clipped by overflow:hidden — on some devices/densities that leaves a faint
+          // sliver visible at the screen edge even when the drawer is fully closed.
+          elevation: 0, shadowOpacity: 0,
+        },
         drawerActiveBackgroundColor: colors.primaryLight + '30',
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.textPrimary,

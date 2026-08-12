@@ -34,6 +34,9 @@ import CommunicationSettingsScreen from './src/screens/CommunicationSettingsScre
 import TermsScreen from './src/screens/TermsScreen';
 import ContactScreen from './src/screens/ContactScreen';
 import AboutScreen from './src/screens/AboutScreen';
+import CoinsScreen from './src/screens/CoinsScreen';
+import WinAssuredScreen from './src/screens/WinAssuredScreen';
+import CashbackScreen from './src/screens/CashbackScreen';
 
 const Drawer = createDrawerNavigator();
 const Stack = createStackNavigator();
@@ -42,6 +45,7 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, sta
 const headerStyle = { backgroundColor: colors.primary };
 const headerTintColor = '#fff';
 const headerTitleStyle = { fontWeight: '700' };
+const HIDDEN_ITEM_STYLE = { height: 0, margin: 0, padding: 0, overflow: 'hidden' };
 
 // Hamburger menu button — shown in nested Stack screens so user can still open drawer
 const MenuButton = ({ navigation }) => (
@@ -141,6 +145,12 @@ function AppDrawer() {
       <Drawer.Screen name="Terms"     component={TermsScreen}      options={{ title: 'Terms & Conditions', drawerIcon: () => <Text>📄</Text> }} />
       <Drawer.Screen name="Contact"   component={ContactScreen}    options={{ title: 'Contact Us',    drawerIcon: () => <Text>📩</Text> }} />
       <Drawer.Screen name="About"     component={AboutScreen}      options={{ title: 'About App',     drawerIcon: () => <Text>ℹ️</Text> }} />
+      {/* Reached only via the Cashback/Coins/Win-assured rows in DrawerContent — collapsed
+          to zero height so DrawerItemList's auto-generated list doesn't show them, without
+          touching state/index (which broke Dashboard's tap-to-navigate — see git history). */}
+      <Drawer.Screen name="Coins" component={CoinsScreen} options={{ title: 'Coins', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
+      <Drawer.Screen name="WinAssured" component={WinAssuredScreen} options={{ title: 'Win Assured ₹100', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
+      <Drawer.Screen name="Cashback" component={CashbackScreen} options={{ title: 'Cashback Balance', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
       <Drawer.Screen
         name="Profile"
         component={ProfileScreen}

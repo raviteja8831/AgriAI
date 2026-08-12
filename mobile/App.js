@@ -36,6 +36,7 @@ import TermsScreen from './src/screens/TermsScreen';
 import ContactScreen from './src/screens/ContactScreen';
 import AboutScreen from './src/screens/AboutScreen';
 import ShopScreen from './src/screens/ShopScreen';
+import ArhaScreen from './src/screens/ArhaScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import CoinsScreen from './src/screens/CoinsScreen';
 import WinAssuredScreen from './src/screens/WinAssuredScreen';
@@ -55,6 +56,13 @@ const HIDDEN_ITEM_STYLE = { height: 0, margin: 0, padding: 0, overflow: 'hidden'
 const MenuButton = ({ navigation }) => (
   <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ paddingHorizontal: 16 }}>
     <Text style={{ color: '#fff', fontSize: 22 }}>☰</Text>
+  </TouchableOpacity>
+);
+
+// Close button — shown on the Arha tab's header, dismisses back to Home.
+const CloseButton = ({ navigation }) => (
+  <TouchableOpacity onPress={() => navigation.navigate('HomeTab')} style={{ paddingHorizontal: 16 }}>
+    <Text style={{ color: '#fff', fontSize: 22 }}>✕</Text>
   </TouchableOpacity>
 );
 
@@ -208,6 +216,15 @@ function RootTabs() {
           title: 'Shop',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🛒</Text>,
         }}
+      />
+      <Tab.Screen
+        name="ArhaTab"
+        component={ArhaScreen}
+        options={({ navigation }) => ({
+          title: 'Arha',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🤖</Text>,
+          headerRight: () => <CloseButton navigation={navigation} />,
+        })}
       />
       <Tab.Screen
         name="ProfileTab"

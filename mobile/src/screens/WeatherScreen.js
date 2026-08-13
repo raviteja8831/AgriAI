@@ -10,7 +10,7 @@ const WEATHER_EMOJI = { Clear: '☀️', Clouds: '☁️', Rain: '🌧️', Thun
 export default function WeatherScreen() {
   const [farmId, setFarmId] = useState('');
 
-  const { data: farmsData } = useQuery({ queryKey: ['farms'], queryFn: () => farmsAPI.getAll().then((r) => r.data) });
+  const { data: farmsData, isLoading: farmsLoading } = useQuery({ queryKey: ['farms'], queryFn: () => farmsAPI.getAll().then((r) => r.data) });
   const farms = farmsData?.farms || [];
 
   useEffect(() => { if (farms.length > 0 && !farmId) setFarmId(String(farms[0].id)); }, [farms]);
@@ -44,11 +44,17 @@ export default function WeatherScreen() {
         </ScrollView>
       )}
 
-      {!farmId || isLoading ? (
+      {farmsLoading ? (
+        <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>
+      ) : farms.length === 0 ? (
+        <Card style={styles.card}>
+          <Card.Content><Text style={styles.empty}>No farms yet. Add a farm with a location to see weather.</Text></Card.Content>
+        </Card>
+      ) : !farmId || isLoading ? (
         <View style={styles.center}><ActivityIndicator size="large" color={colors.primary} /></View>
       ) : !weather ? (
         <Card style={styles.card}>
-          <Card.Content><Text style={styles.empty}>Weather unavailable. Ensure the farm has GPS coordinates and the API key is configured.</Text></Card.Content>
+          <Card.Content><Text style={styles.empty}>Weather unavailable. Make sure this farm has GPS coordinates set, then pull down to refresh.</Text></Card.Content>
         </Card>
       ) : (
         <>

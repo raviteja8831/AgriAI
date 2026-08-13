@@ -6,7 +6,17 @@ import { colors } from '../utils/theme';
 const WEATHER_EMOJI = { Clear: '☀️', Clouds: '☁️', Rain: '🌧️', Thunderstorm: '⛈️', Drizzle: '🌦️', Snow: '❄️', Haze: '🌫️', Mist: '🌫️' };
 
 export default function WeatherCard({ weather }) {
-  if (!weather) return null;
+  if (!weather) {
+    return (
+      <View style={styles.fallbackCard}>
+        <Text style={styles.fallbackEmoji}>🌦️</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.fallbackTitle}>Weather unavailable</Text>
+          <Text style={styles.fallbackSub}>Couldn't fetch today's weather. Pull down to refresh.</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>
@@ -50,6 +60,14 @@ export default function WeatherCard({ weather }) {
 }
 
 const styles = StyleSheet.create({
+  fallbackCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: colors.surface, borderRadius: 16, marginBottom: 12, padding: 16,
+    borderWidth: 1, borderColor: colors.border,
+  },
+  fallbackEmoji: { fontSize: 32 },
+  fallbackTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  fallbackSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   card: { backgroundColor: colors.primary, borderRadius: 16, marginBottom: 12, padding: 16, elevation: 3 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
   emoji: { fontSize: 44 },

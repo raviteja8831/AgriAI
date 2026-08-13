@@ -9,6 +9,19 @@ import { colors } from '../utils/theme';
 export default function FarmDetailScreen({ route, navigation }) {
   const { farmId } = route.params;
 
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      headerLeft: () => (
+        <TouchableOpacity
+          onPress={() => { navigation.navigate('Dashboard'); navigation.openDrawer(); }}
+          style={{ paddingHorizontal: 16 }}
+        >
+          <Text style={{ color: '#fff', fontSize: 22 }}>☰</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
   const { data: farmData, isLoading } = useQuery({ queryKey: ['farm', farmId], queryFn: () => farmsAPI.getOne(farmId).then((r) => r.data) });
   const { data: soilData } = useQuery({ queryKey: ['soil-latest', farmId], queryFn: () => soilAPI.getLatest(farmId).then((r) => r.data) });
   const { data: weatherData } = useQuery({

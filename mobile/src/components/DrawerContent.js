@@ -122,6 +122,13 @@ export default function DrawerContent(props) {
         style={{ flex: 1 }}
         contentContainerStyle={styles.container}
       >
+        <TouchableOpacity
+          onPress={() => props.navigation.closeDrawer()}
+          style={styles.backBtn}
+          hitSlop={{ top: 5, bottom: 5, left: 10, right: 10 }}
+        >
+          <Text style={styles.backArrow}>←</Text>
+        </TouchableOpacity>
         <View style={styles.profileCard}>
           {user?.profile_image ? (
             <Avatar.Image
@@ -209,11 +216,18 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: "#fff",
   },
+  backBtn: {
+    alignSelf: "flex-start",
+    marginTop: 12,
+    marginLeft: 16,
+    padding: 4,
+  },
+  backArrow: { fontSize: 24, color: colors.textPrimary },
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 16,
-    marginTop: 48,
+    marginTop: 12,
     padding: 14,
   },
   avatar: { backgroundColor: colors.secondary },

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
 import { Text, ActivityIndicator, Portal, Modal, RadioButton, Button, Searchbar } from 'react-native-paper';
+import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import WeatherCard from '../components/WeatherCard';
@@ -75,6 +76,23 @@ export default function DashboardScreen({ navigation }) {
   const [langModalVisible, setLangModalVisible] = useState(false);
   const [selectedLang, setSelectedLang] = useState(user?.language || 'en');
   const [searchQuery, setSearchQuery] = useState('');
+  const [deviceLoc, setDeviceLoc] = useState(null);
+
+  // Fallback for weather when the user hasn't registered a farm yet — uses
+  // whatever location permission was already granted (Intro/Onboarding),
+  // never prompts on its own since request*Async() no-ops after the first decision.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted' || cancelled) return;
+      try {
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
+        if (!cancelled) setDeviceLoc({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+      } catch { /* location unavailable — weather falls back to farm coords or the empty card */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Shared with NotificationsScreen's ['notifications'] query — navigating there shows
   // this cached unread count instantly while it refetches in the background.
@@ -128,8 +146,8 @@ export default function DashboardScreen({ navigation }) {
   };
 
   const { data: dash, isLoading, refetch, isFetching } = useQuery({
-    queryKey: ['dashboard'],
-    queryFn: () => api.get('/dashboard/summary').then((r) => r.data),
+    queryKey: ['dashboard', deviceLoc?.latitude, deviceLoc?.longitude],
+    queryFn: () => api.get('/dashboard/summary', { params: deviceLoc ? { lat: deviceLoc.latitude, lng: deviceLoc.longitude } : {} }).then((r) => r.data),
     refetchInterval: 5 * 60 * 1000, // refresh every 5 min
   });
 

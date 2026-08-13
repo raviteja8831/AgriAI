@@ -1,6 +1,6 @@
-const axios = require('axios');
 const WeatherHistory = require('../models/WeatherHistory');
 const Farm = require('../models/Farm');
+const { getCurrentWeather, getDailyForecast } = require('../utils/openMeteo');
 
 const AI_SUGGESTIONS = {
   Rain: { suggestion: 'Rain expected. Skip irrigation today and delay any spraying activities.', irrigation_advised: false, spray_advised: false },
@@ -26,29 +26,14 @@ exports.getCurrent = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Farm location not set' });
     }
 
-    const url = `${process.env.WEATHER_BASE_URL}/weather`;
-    const response = await axios.get(url, {
-      params: { lat: farm.latitude, lon: farm.longitude, appid: process.env.WEATHER_API_KEY, units: 'metric' },
-    });
-
-    const d = response.data;
-    const condition = d.weather[0].main;
-    const ai = getAISuggestion(condition, d.main.humidity, d.rain?.['1h'] || 0);
+    const w = await getCurrentWeather(farm.latitude, farm.longitude);
+    const ai = getAISuggestion(w.condition, w.humidity, w.rainfall);
 
     res.json({
       success: true,
       weather: {
-        temperature: d.main.temp,
-        feels_like: d.main.feels_like,
-        humidity: d.main.humidity,
-        pressure: d.main.pressure,
-        wind_speed: d.wind.speed * 3.6,
-        condition,
-        description: d.weather[0].description,
-        icon: d.weather[0].icon,
-        rainfall: d.rain?.['1h'] || 0,
-        uv_index: null,
-        city: d.name,
+        ...w,
+        city: farm.village || farm.name,
         ...ai,
       },
     });
@@ -64,33 +49,11 @@ exports.getForecast = async (req, res) => {
     const farm = await Farm.findOne({ where: { id: farm_id, user_id: req.user.id } });
     if (!farm) return res.status(404).json({ success: false, message: 'Farm not found' });
 
-    const url = `${process.env.WEATHER_BASE_URL}/forecast`;
-    const response = await axios.get(url, {
-      params: { lat: farm.latitude, lon: farm.longitude, appid: process.env.WEATHER_API_KEY, units: 'metric', cnt: 40 },
-    });
-
-    const dailyMap = {};
-    response.data.list.forEach((item) => {
-      const date = item.dt_txt.split(' ')[0];
-      if (!dailyMap[date]) dailyMap[date] = [];
-      dailyMap[date].push(item);
-    });
-
-    const forecast = Object.entries(dailyMap).slice(0, 7).map(([date, items]) => {
-      const temps = items.map((i) => i.main.temp);
-      const condition = items[Math.floor(items.length / 2)].weather[0].main;
-      const rainfall = items.reduce((s, i) => s + (i.rain?.['3h'] || 0), 0);
-      const ai = getAISuggestion(condition, items[0].main.humidity, rainfall);
-      return {
-        date,
-        temp_max: Math.max(...temps),
-        temp_min: Math.min(...temps),
-        humidity: Math.round(items.reduce((s, i) => s + i.main.humidity, 0) / items.length),
-        condition,
-        rainfall,
-        ...ai,
-      };
-    });
+    const days = await getDailyForecast(farm.latitude, farm.longitude, 7);
+    const forecast = days.map((day) => ({
+      ...day,
+      ...getAISuggestion(day.condition, day.humidity, day.rainfall),
+    }));
 
     res.json({ success: true, forecast });
   } catch (err) {

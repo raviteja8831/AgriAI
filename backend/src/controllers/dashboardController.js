@@ -5,6 +5,7 @@ const CropCalendar = require('../models/CropCalendar');
 const Expense = require('../models/Expense');
 const Harvest = require('../models/Harvest');
 const WeatherHistory = require('../models/WeatherHistory');
+const { getCurrentWeather } = require('../utils/openMeteo');
 
 // Growth stages by % completion
 const getGrowthStage = (cropName, pct) => {
@@ -136,31 +137,33 @@ exports.getSummary = async (req, res) => {
     const seasonExpenses = crops.reduce((s, c) => s + c.expenses.reduce((es, e) => es + parseFloat(e.amount), 0), 0);
     const seasonRevenue = crops.filter((c) => c.harvest).reduce((s, c) => s + parseFloat(c.harvest.total_revenue || 0), 0);
 
-    // Weather for first farm that has coords
+    // Weather for first farm that has coords — falls back to the device's current
+    // location (passed as ?lat=&lng= by the app when it has location permission)
+    // so weather works before the user has registered any farm.
     let weather = null;
     const farmWithCoords = farms.find((f) => f.latitude && f.longitude);
-    if (farmWithCoords) {
+    const deviceLat = parseFloat(req.query.lat);
+    const deviceLng = parseFloat(req.query.lng);
+    const source = farmWithCoords
+      ? { lat: farmWithCoords.latitude, lng: farmWithCoords.longitude, name: farmWithCoords.name }
+      : (Number.isFinite(deviceLat) && Number.isFinite(deviceLng))
+        ? { lat: deviceLat, lng: deviceLng, name: 'Your location' }
+        : null;
+    if (source) {
       try {
-        const axios = require('axios');
-        const url = `${process.env.WEATHER_BASE_URL}/weather`;
-        const wr = await axios.get(url, {
-          params: { lat: farmWithCoords.latitude, lon: farmWithCoords.longitude, appid: process.env.WEATHER_API_KEY, units: 'metric' },
-          timeout: 4000,
-        });
-        const d = wr.data;
+        const w = await getCurrentWeather(source.lat, source.lng);
         weather = {
-          temperature: Math.round(d.main.temp),
-          humidity: d.main.humidity,
-          condition: d.weather[0].main,
-          description: d.weather[0].description,
-          wind_speed: Math.round(d.wind.speed * 3.6),
-          rainfall: d.rain?.['1h'] || 0,
-          icon: d.weather[0].icon,
-          irrigation_advised: !['Rain', 'Thunderstorm', 'Drizzle'].includes(d.weather[0].main) && d.main.humidity < 70,
-          spray_advised: !['Rain', 'Thunderstorm', 'Drizzle'].includes(d.weather[0].main) && d.wind.speed < 8,
-          farm_name: farmWithCoords.name,
+          temperature: Math.round(w.temperature),
+          humidity: w.humidity,
+          condition: w.condition,
+          description: w.description,
+          wind_speed: Math.round(w.wind_speed),
+          rainfall: w.rainfall,
+          irrigation_advised: !['Rain', 'Thunderstorm', 'Drizzle'].includes(w.condition) && w.humidity < 70,
+          spray_advised: !['Rain', 'Thunderstorm', 'Drizzle'].includes(w.condition) && w.wind_speed < 28.8,
+          farm_name: source.name,
         };
-      } catch { /* no weather key configured */ }
+      } catch { /* weather service unreachable */ }
     }
 
     // Pest risk from weather

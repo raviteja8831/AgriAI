@@ -52,25 +52,12 @@ const headerTintColor = '#fff';
 const headerTitleStyle = { fontWeight: '700' };
 const HIDDEN_ITEM_STYLE = { height: 0, margin: 0, padding: 0, overflow: 'hidden' };
 
-// Hamburger menu button — shown in nested Stack screens so user can still open drawer
+// Hamburger menu button — shown on every screen's header. Switches the drawer's
+// active route to Dashboard first, then opens the sidebar on top of it — so tapping
+// the hamburger always lands the user back home, from any page, and picking a menu
+// item from there navigates as usual (dismissing the drawer reveals Dashboard rather
+// than whatever screen it was opened from).
 const MenuButton = ({ navigation }) => (
-  <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ paddingHorizontal: 16 }}>
-    <Text style={{ color: '#fff', fontSize: 22 }}>☰</Text>
-  </TouchableOpacity>
-);
-
-// Close button — shown on the Arha tab's header, dismisses back to Home.
-const CloseButton = ({ navigation }) => (
-  <TouchableOpacity onPress={() => navigation.navigate('HomeTab')} style={{ paddingHorizontal: 16 }}>
-    <Text style={{ color: '#fff', fontSize: 22 }}>✕</Text>
-  </TouchableOpacity>
-);
-
-// Hamburger menu — shown on the Profile screen. Switches the drawer's active route to
-// Dashboard first, then opens the sidebar on top of it — so picking a menu item
-// navigates there as usual, but dismissing the drawer (tap outside/swipe) reveals
-// Dashboard instead of landing back on Profile.
-const BackButton = ({ navigation }) => (
   <TouchableOpacity
     onPress={() => {
       navigation.navigate('Dashboard');
@@ -82,6 +69,13 @@ const BackButton = ({ navigation }) => (
   </TouchableOpacity>
 );
 
+// Close button — shown on the Arha tab's header, dismisses back to Home.
+const CloseButton = ({ navigation }) => (
+  <TouchableOpacity onPress={() => navigation.navigate('HomeTab')} style={{ paddingHorizontal: 16 }}>
+    <Text style={{ color: '#fff', fontSize: 22 }}>✕</Text>
+  </TouchableOpacity>
+);
+
 function FarmsStack({ navigation }) {
   return (
     <Stack.Navigator
@@ -90,8 +84,7 @@ function FarmsStack({ navigation }) {
         headerTintColor,
         headerTitleStyle,
         // Show menu button as the left icon in all Farms sub-screens
-        headerLeft: ({ canGoBack }) =>
-          canGoBack ? undefined : <MenuButton navigation={navigation} />,
+        headerLeft: () => <MenuButton navigation={navigation} />,
       }}
     >
       <Stack.Screen name="FarmsList" component={FarmsScreen} options={{ title: 'My Farms' }} />
@@ -107,8 +100,7 @@ function CropsStack({ navigation }) {
         headerStyle,
         headerTintColor,
         headerTitleStyle,
-        headerLeft: ({ canGoBack }) =>
-          canGoBack ? undefined : <MenuButton navigation={navigation} />,
+        headerLeft: () => <MenuButton navigation={navigation} />,
       }}
     >
       <Stack.Screen name="CropsList" component={CropsScreen} options={{ title: 'Crops' }} />
@@ -130,10 +122,11 @@ function AppDrawer({ onDrawerOpenChange }) {
     <Drawer.Navigator
       key={width}
       drawerContent={(props) => <DrawerContent {...props} onDrawerOpenChange={onDrawerOpenChange} />}
-      screenOptions={{
+      screenOptions={({ navigation }) => ({
         headerStyle,
         headerTintColor,
         headerTitleStyle,
+        headerLeft: () => <MenuButton navigation={navigation} />,
         drawerType: 'front',
         drawerStyle: {
           width: '80%', borderTopRightRadius: 24, borderBottomRightRadius: 24, overflow: 'hidden',
@@ -145,7 +138,7 @@ function AppDrawer({ onDrawerOpenChange }) {
         drawerActiveBackgroundColor: colors.primaryLight + '30',
         drawerActiveTintColor: colors.primary,
         drawerInactiveTintColor: colors.textPrimary,
-      }}
+      })}
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen}  options={{ title: 'Home',          drawerIcon: () => <Text>🏠</Text> }} />
       <Drawer.Screen name="Farms"     component={FarmsStack}       options={{ title: 'My Farms',      drawerIcon: () => <Text>🏡</Text>, headerShown: false }} />
@@ -168,11 +161,7 @@ function AppDrawer({ onDrawerOpenChange }) {
       <Drawer.Screen
         name="Profile"
         component={ProfileScreen}
-        options={({ navigation }) => ({
-          title: 'My Profile',
-          drawerIcon: () => <Text>👤</Text>,
-          headerLeft: () => <BackButton navigation={navigation} />,
-        })}
+        options={{ title: 'My Profile', drawerIcon: () => <Text>👤</Text> }}
       />
     </Drawer.Navigator>
   );

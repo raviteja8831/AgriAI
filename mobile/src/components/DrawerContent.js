@@ -23,7 +23,7 @@ import { getCashbackBalance, getCoinsBalance } from "../utils/rewards";
 // Same route mapping as @react-navigation/drawer's DrawerItemList, but with a
 // trailing arrow on every label to match the arrow style used in the rewards rows above.
 function DrawerItemsWithArrows({ state, navigation, descriptors }) {
-  const buildLink = useLinkBuilder();
+  const { buildHref } = useLinkBuilder();
 
   return state.routes.map((route, i) => {
     const focused = i === state.index;
@@ -74,7 +74,7 @@ function DrawerItemsWithArrows({ state, navigation, descriptors }) {
         icon={drawerIcon}
         focused={focused}
         style={drawerItemStyle}
-        to={buildLink(route.name, route.params)}
+        href={buildHref(route.name, route.params)}
         onPress={onPress}
       />
     );

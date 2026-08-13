@@ -56,6 +56,8 @@ module.exports = {
     plugins: [
       'expo-location',
       'expo-image-picker',
+      'expo-font',
+      'expo-asset',
     ],
   },
 };

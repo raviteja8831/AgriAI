@@ -3,6 +3,7 @@ import { View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from '
 import { Text, ActivityIndicator, Portal, Modal, RadioButton, Button, Searchbar } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import WeatherCard from '../components/WeatherCard';
 import TodayBriefCard from '../components/TodayBriefCard';
 import MarketPriceCard from '../components/MarketPriceCard';
 import CropProgressCard from '../components/CropProgressCard';
@@ -165,12 +166,15 @@ export default function DashboardScreen({ navigation }) {
     >
       {/* Greeting */}
       <View style={styles.greeting}>
-        <Text style={styles.greetName}>Jai Kisaan, {firstName}! 🙏</Text>
+        <Text style={styles.greetName}>Hello, {firstName}! 🙏</Text>
         <Text style={styles.greetDate}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
       </View>
 
-      {/* Today's brief + weather */}
-      <TodayBriefCard brief={brief} weather={weather} />
+      {/* Weather */}
+      <WeatherCard weather={weather} />
+
+      {/* Today's brief */}
+      <TodayBriefCard brief={brief} />
 
       {/* Pest risk banner (only if medium/high) */}
       <PestRiskBanner risk={pestRisk} />

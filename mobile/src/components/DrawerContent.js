@@ -9,15 +9,77 @@ import {
 import { Text, Avatar, Divider } from "react-native-paper";
 import {
   DrawerContentScrollView,
-  DrawerItemList,
+  DrawerItem,
   useDrawerStatus,
 } from "@react-navigation/drawer";
+import { CommonActions, DrawerActions, useLinkBuilder } from "@react-navigation/native";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../store/authSlice";
 import { colors } from "../utils/theme";
 import { BASE_URL } from "../utils/api";
 import { capitalize } from "../utils/format";
 import { getCashbackBalance, getCoinsBalance } from "../utils/rewards";
+
+// Same route mapping as @react-navigation/drawer's DrawerItemList, but with a
+// trailing arrow on every label to match the arrow style used in the rewards rows above.
+function DrawerItemsWithArrows({ state, navigation, descriptors }) {
+  const buildLink = useLinkBuilder();
+
+  return state.routes.map((route, i) => {
+    const focused = i === state.index;
+
+    const onPress = () => {
+      const event = navigation.emit({
+        type: "drawerItemPress",
+        target: route.key,
+        canPreventDefault: true,
+      });
+      if (!event.defaultPrevented) {
+        navigation.dispatch({
+          ...(focused
+            ? DrawerActions.closeDrawer()
+            : CommonActions.navigate({ name: route.name, merge: true })),
+          target: state.key,
+        });
+      }
+    };
+
+    const {
+      title,
+      drawerLabel,
+      drawerIcon,
+      drawerLabelStyle,
+      drawerItemStyle,
+      drawerAllowFontScaling,
+    } = descriptors[route.key].options;
+
+    const label =
+      drawerLabel !== undefined ? drawerLabel : title !== undefined ? title : route.name;
+
+    return (
+      <DrawerItem
+        key={route.key}
+        label={({ color }) => (
+          <View style={styles.itemLabelRow}>
+            <Text
+              numberOfLines={1}
+              allowFontScaling={drawerAllowFontScaling}
+              style={[{ color, fontWeight: "500", flex: 1 }, drawerLabelStyle]}
+            >
+              {typeof label === "function" ? label({ focused, color }) : label}
+            </Text>
+            <Text style={[styles.itemArrow, { color }]}>›</Text>
+          </View>
+        )}
+        icon={drawerIcon}
+        focused={focused}
+        style={drawerItemStyle}
+        to={buildLink(route.name, route.params)}
+        onPress={onPress}
+      />
+    );
+  });
+}
 
 export default function DrawerContent(props) {
   const dispatch = useDispatch();
@@ -125,7 +187,7 @@ export default function DrawerContent(props) {
         </Pressable>
         <Divider style={{ marginTop: 12, marginBottom: 4 }} />
 
-        <DrawerItemList {...props} />
+        <DrawerItemsWithArrows {...props} />
 
         <TouchableOpacity
           style={styles.logoutBtn}
@@ -200,6 +262,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   rewardArrow: { fontSize: 24, color: colors.textSecondary },
+  itemLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flex: 1,
+  },
+  itemArrow: { fontSize: 18, marginLeft: 8, opacity: 0.6 },
   logoutBtn: {
     marginHorizontal: 16,
     marginTop: 8,

@@ -17,9 +17,14 @@ CREATE TABLE IF NOT EXISTS users (
   is_active BOOLEAN DEFAULT TRUE,
   fcm_token VARCHAR(500),
   last_login DATETIME,
+  referred_by INT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (referred_by) REFERENCES users(id) ON DELETE SET NULL
 );
+
+-- Adds referred_by to a users table created before this column existed (no-op on fresh installs)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by INT AFTER last_login;
 
 -- Farms
 CREATE TABLE IF NOT EXISTS farms (

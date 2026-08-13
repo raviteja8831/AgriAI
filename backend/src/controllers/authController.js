@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const User = require('../models/User');
+const { decodeReferralCode } = require('../utils/referral');
 
 const uploadDir = path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
@@ -27,7 +28,7 @@ const signToken = (id) =>
 const HARDCODED_OTP = '1234';
 
 exports.sendOTP = async (req, res) => {
-  const { phone } = req.body;
+  const { phone, referralCode } = req.body;
   if (!phone) return res.status(400).json({ success: false, message: 'Phone number required' });
   try {
     let user = await User.findOne({ where: { phone } });
@@ -35,7 +36,15 @@ exports.sendOTP = async (req, res) => {
 
     if (!user) {
       // Create a minimal account — name is filled in during onboarding
-      user = await User.create({ name: phone, phone, is_active: true });
+      let referredBy = null;
+      if (referralCode) {
+        const referrerId = decodeReferralCode(referralCode);
+        if (referrerId) {
+          const referrer = await User.findByPk(referrerId);
+          if (referrer) referredBy = referrer.id;
+        }
+      }
+      user = await User.create({ name: phone, phone, is_active: true, referred_by: referredBy });
     }
 
     const expires = new Date(Date.now() + 10 * 60 * 1000);

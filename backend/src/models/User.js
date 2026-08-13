@@ -16,6 +16,7 @@ const User = sequelize.define('User', {
   is_active: { type: DataTypes.BOOLEAN, defaultValue: true },
   fcm_token: { type: DataTypes.STRING(500) },
   last_login: { type: DataTypes.DATE },
+  referred_by: { type: DataTypes.INTEGER },
 }, {
   tableName: 'users',
   timestamps: true,

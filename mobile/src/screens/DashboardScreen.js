@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from '
 import { Text, ActivityIndicator, Portal, Modal, RadioButton, Button, Searchbar } from 'react-native-paper';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, keepPreviousData } from '@tanstack/react-query';
 import WeatherCard from '../components/WeatherCard';
 import TodayBriefCard from '../components/TodayBriefCard';
 import MarketPriceCard from '../components/MarketPriceCard';
@@ -149,6 +149,11 @@ export default function DashboardScreen({ navigation }) {
     queryKey: ['dashboard', deviceLoc?.latitude, deviceLoc?.longitude],
     queryFn: () => api.get('/dashboard/summary', { params: deviceLoc ? { lat: deviceLoc.latitude, lng: deviceLoc.longitude } : {} }).then((r) => r.data),
     refetchInterval: 5 * 60 * 1000, // refresh every 5 min
+    // Device location resolves a couple seconds after mount and changes the query key
+    // (undefined,undefined -> lat,lng). Without this, that key change is treated as a
+    // brand-new query and `dash` (and weather.temperature) flashes undefined until the
+    // refetch completes — keep showing the last good dashboard in the meantime.
+    placeholderData: keepPreviousData,
   });
 
   const { data: marketData, refetch: refetchMarket } = useQuery({
@@ -265,7 +270,7 @@ export default function DashboardScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  headerTitleContainer: { flex: 1, marginHorizontal: 8 },
+  headerTitleContainer: { flex: 1, marginHorizontal: 2 },
   headerSearch: { height: 40, borderRadius: 20, backgroundColor: '#ffffff30', elevation: 0 },
   headerSearchInput: { fontSize: 14, minHeight: 0, alignSelf: 'center', color: '#fff' },
   bellButton: { paddingHorizontal: 12, position: 'relative' },

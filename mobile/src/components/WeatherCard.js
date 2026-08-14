@@ -6,7 +6,7 @@ import { colors } from '../utils/theme';
 const WEATHER_EMOJI = { Clear: '☀️', Clouds: '☁️', Rain: '🌧️', Thunderstorm: '⛈️', Drizzle: '🌦️', Snow: '❄️', Haze: '🌫️', Mist: '🌫️' };
 
 export default function WeatherCard({ weather }) {
-  if (!weather) {
+  if (!weather || !Number.isFinite(weather.temperature)) {
     return (
       <View style={styles.fallbackCard}>
         <Text style={styles.fallbackEmoji}>🌦️</Text>
@@ -23,7 +23,7 @@ export default function WeatherCard({ weather }) {
       <View style={styles.top}>
         <Text style={styles.emoji}>{WEATHER_EMOJI[weather.condition] || '🌤️'}</Text>
         <View style={styles.tempBlock}>
-          <Text style={styles.temp}>{weather.temperature}°</Text>
+          <Text style={styles.temp}>{Math.round(weather.temperature)}°</Text>
           <Text style={styles.desc}>{weather.description}</Text>
           <Text style={styles.farm}>📍 {weather.farm_name}</Text>
         </View>

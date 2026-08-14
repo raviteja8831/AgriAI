@@ -185,7 +185,7 @@ function RootTabs() {
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
-        tabBarStyle: drawerOpen ? { display: 'none' } : { height: 60, paddingBottom: 8, paddingTop: 6 },
+        tabBarStyle: drawerOpen ? { display: 'none' } : { height: 70, paddingBottom: 8, paddingTop: 6 },
       }}
     >
       <Tab.Screen

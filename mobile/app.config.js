@@ -56,6 +56,10 @@ module.exports = {
     plugins: [
       'expo-location',
       'expo-image-picker',
+      'expo-font',
+      'expo-asset',
+      'expo-splash-screen',
+      'expo-status-bar',
     ],
   },
 };

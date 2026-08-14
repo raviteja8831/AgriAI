@@ -19,7 +19,10 @@ export default function CropDetailScreen({ route, navigation }) {
   React.useLayoutEffect(() => {
     navigation.setOptions({
       headerLeft: () => (
-        <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ paddingHorizontal: 16 }}>
+        <TouchableOpacity
+          onPress={() => { navigation.navigate('Dashboard'); navigation.openDrawer(); }}
+          style={{ paddingHorizontal: 16 }}
+        >
           <RNText style={{ color: '#fff', fontSize: 22 }}>☰</RNText>
         </TouchableOpacity>
       ),

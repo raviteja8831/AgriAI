@@ -12,7 +12,7 @@ const TYPE_STYLE = {
   harvest: { bg: '#f3e5f5', border: '#7b1fa2',       icon_bg: '#7b1fa2' },
 };
 
-export default function TodayBriefCard({ brief = [], weather }) {
+export default function TodayBriefCard({ brief = [] }) {
   const [expanded, setExpanded] = useState(false);
   const visible = expanded ? brief : brief.slice(0, 3);
 
@@ -26,24 +26,6 @@ export default function TodayBriefCard({ brief = [], weather }) {
 
   return (
     <View style={styles.card}>
-      {/* Weather strip */}
-      {weather && (
-        <View style={styles.weatherStrip}>
-          <View style={styles.weatherLeft}>
-            <Text style={styles.tempBig}>{weather.temperature}°</Text>
-            <View>
-              <Text style={styles.weatherDesc}>{weather.description}</Text>
-              <Text style={styles.weatherFarm}>📍 {weather.farm_name}</Text>
-            </View>
-          </View>
-          <View style={styles.weatherRight}>
-            <Text style={styles.weatherStat}>💧 {weather.humidity}%</Text>
-            <Text style={styles.weatherStat}>💨 {weather.wind_speed} km/h</Text>
-            {weather.rainfall > 0 && <Text style={styles.weatherStat}>🌧️ {weather.rainfall} mm</Text>}
-          </View>
-        </View>
-      )}
-
       {/* Today's actions */}
       <View style={styles.briefHeader}>
         <Text style={styles.briefTitle}>{greetEmoji} {greet} — Here's your plan today</Text>
@@ -80,13 +62,6 @@ export default function TodayBriefCard({ brief = [], weather }) {
 
 const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 16, marginBottom: 12, overflow: 'hidden', elevation: 3 },
-  weatherStrip: { backgroundColor: colors.primary, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
-  weatherLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  tempBig: { fontSize: 52, fontWeight: '800', color: '#fff' },
-  weatherDesc: { color: 'rgba(255,255,255,0.9)', fontSize: 14, textTransform: 'capitalize', fontWeight: '500' },
-  weatherFarm: { color: 'rgba(255,255,255,0.65)', fontSize: 11, marginTop: 2 },
-  weatherRight: { alignItems: 'flex-end', gap: 4 },
-  weatherStat: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '500' },
   briefHeader: { paddingHorizontal: 14, paddingTop: 14, paddingBottom: 8 },
   briefTitle: { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   briefItem: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 12, marginBottom: 8, borderRadius: 10, borderLeftWidth: 4, paddingVertical: 10, paddingRight: 12, gap: 10 },

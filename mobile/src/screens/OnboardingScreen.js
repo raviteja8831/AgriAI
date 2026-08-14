@@ -9,7 +9,7 @@ import * as Location from 'expo-location';
 import { useSnackbar } from '../components/SnackbarProvider';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMutation } from '@tanstack/react-query';
-import { authAPI } from '../api';
+import { authAPI, farmsAPI } from '../api';
 import api from '../utils/api';
 import { setCredentials } from '../store/authSlice';
 import { colors } from '../utils/theme';
@@ -110,7 +110,21 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    // Location was captured to fetch crop recommendations (step 1) but never saved —
+    // persist it as the user's first farm so weather etc. work without a separate manual step.
+    if (location) {
+      try {
+        await farmsAPI.create({
+          name: `${name.trim() || 'My'} Farm`,
+          latitude: location.latitude,
+          longitude: location.longitude,
+          area_acres: parseFloat(area) > 0 ? parseFloat(area) : 1,
+        });
+      } catch {
+        /* not fatal — user can add a farm manually from the Farms screen */
+      }
+    }
     // Mark onboarding done by dispatching a flag — App.js will move to main app
     dispatch(setCredentials({ token: user?.token, user: { ...user, onboarded: true } }));
   };

@@ -2,7 +2,7 @@ import api from '../utils/api';
 
 // Auth
 export const authAPI = {
-  sendOTP: (phone, referralCode) => api.post('/auth/send-otp', { phone, referralCode: referralCode || undefined }),
+  sendOTP: (phone, referralCode, whatsappUpdates) => api.post('/auth/send-otp', { phone, referralCode: referralCode || undefined, whatsappUpdates }),
   verifyOTP: (data) => api.post('/auth/verify-otp', data),
   setupProfile: (data) => api.post('/auth/setup', data),
   getMe: () => api.get('/auth/me'),

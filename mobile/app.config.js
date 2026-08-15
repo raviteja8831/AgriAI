@@ -60,6 +60,7 @@ module.exports = {
       'expo-asset',
       'expo-splash-screen',
       'expo-status-bar',
+      'expo-video',
     ],
   },
 };

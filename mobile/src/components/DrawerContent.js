@@ -38,7 +38,7 @@ function DrawerItemsWithArrows({ state, navigation, descriptors }) {
         navigation.dispatch({
           ...(focused
             ? DrawerActions.closeDrawer()
-            : CommonActions.navigate({ name: route.name, merge: true })),
+            : CommonActions.navigate(route.name, undefined, { merge: true })),
           target: state.key,
         });
       }

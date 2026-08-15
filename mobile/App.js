@@ -20,7 +20,6 @@ import DrawerContent from './src/components/DrawerContent';
 
 import IntroScreen from './src/screens/IntroScreen';
 import LoginScreen from './src/screens/LoginScreen';
-import StayConnectedScreen from './src/screens/StayConnectedScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import FarmsScreen from './src/screens/FarmsScreen';
@@ -38,6 +37,7 @@ import AboutScreen from './src/screens/AboutScreen';
 import ShopScreen from './src/screens/ShopScreen';
 import ArhaScreen from './src/screens/ArhaScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
+import VideosScreen from './src/screens/VideosScreen';
 import CoinsScreen from './src/screens/CoinsScreen';
 import WinAssuredScreen from './src/screens/WinAssuredScreen';
 import CashbackScreen from './src/screens/CashbackScreen';
@@ -52,17 +52,12 @@ const headerTintColor = '#fff';
 const headerTitleStyle = { fontWeight: '700' };
 const HIDDEN_ITEM_STYLE = { height: 0, margin: 0, padding: 0, overflow: 'hidden' };
 
-// Hamburger menu button — shown on every screen's header. Switches the drawer's
-// active route to Dashboard first, then opens the sidebar on top of it — so tapping
-// the hamburger always lands the user back home, from any page, and picking a menu
-// item from there navigates as usual (dismissing the drawer reveals Dashboard rather
-// than whatever screen it was opened from).
+// Hamburger menu button — shown on every drawer screen's header. Just takes the
+// user back to Dashboard; the sidebar itself is still reachable via the swipe
+// gesture from the left edge (drawerType 'front' below).
 const MenuButton = ({ navigation }) => (
   <TouchableOpacity
-    onPress={() => {
-      navigation.navigate('Dashboard');
-      navigation.openDrawer();
-    }}
+    onPress={() => navigation.navigate('Dashboard')}
     style={{ paddingHorizontal: 16 }}
   >
     <Text style={{ color: '#fff', fontSize: 22 }}>☰</Text>
@@ -70,9 +65,20 @@ const MenuButton = ({ navigation }) => (
 );
 
 // Close button — shown on the Arha tab's header, dismisses back to Home.
+// Targets Dashboard explicitly (not just the HomeTab) so it lands on the actual
+// home screen even if the drawer was last left showing Farms/Weather/etc.
 const CloseButton = ({ navigation }) => (
-  <TouchableOpacity onPress={() => navigation.navigate('HomeTab')} style={{ paddingHorizontal: 16 }}>
+  <TouchableOpacity onPress={() => navigation.navigate('HomeTab', { screen: 'Dashboard' })} style={{ paddingHorizontal: 16 }}>
     <Text style={{ color: '#fff', fontSize: 22 }}>✕</Text>
+  </TouchableOpacity>
+);
+
+// Hamburger shown on the other bottom tabs (Shop, Videos, Arha, Profile) — these
+// aren't nested in the drawer, so tapping it jumps back to the Home tab's
+// Dashboard screen specifically (not whatever drawer screen was last open).
+const HomeButton = ({ navigation }) => (
+  <TouchableOpacity onPress={() => navigation.navigate('HomeTab', { screen: 'Dashboard' })} style={{ paddingHorizontal: 16 }}>
+    <Text style={{ color: '#fff', fontSize: 22 }}>☰</Text>
   </TouchableOpacity>
 );
 
@@ -144,6 +150,7 @@ function AppDrawer({ onDrawerOpenChange }) {
       <Drawer.Screen name="Farms"     component={FarmsStack}       options={{ title: 'My Farms',      drawerIcon: () => <Text>🏡</Text>, headerShown: false }} />
       <Drawer.Screen name="Crops"     component={CropsStack}       options={{ title: 'Crops',         drawerIcon: () => <Text>🌿</Text>, headerShown: false }} />
       <Drawer.Screen name="Weather"   component={WeatherScreen}    options={{ title: 'Weather',       drawerIcon: () => <Text>🌤️</Text> }} />
+      <Drawer.Screen name="Videos"    component={VideosScreen}     options={{ title: 'Videos',        drawerIcon: () => <Text>🎬</Text> }} />
       <Drawer.Screen name="Calendar"  component={CalendarScreen}   options={{ title: 'Crop Calendar', drawerIcon: () => <Text>📅</Text> }} />
       <Drawer.Screen name="Soil"      component={SoilScreen}       options={{ title: 'Soil Analysis', drawerIcon: () => <Text>🧪</Text> }} />
       <Drawer.Screen name="Communication" component={CommunicationSettingsScreen} options={{ title: 'Communication Settings', drawerIcon: () => <Text>💬</Text> }} />
@@ -195,16 +202,35 @@ function RootTabs() {
           headerShown: false,
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏠</Text>,
         }}
+        listeners={({ navigation }) => ({
+          // Always land on Dashboard, even if the drawer was last left showing
+          // Farms/Weather/Videos/etc. — otherwise re-pressing Home just reveals
+          // whatever nested drawer screen was open before switching tabs.
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('HomeTab', { screen: 'Dashboard' });
+          },
+        })}
       >
         {() => <AppDrawer onDrawerOpenChange={setDrawerOpen} />}
       </Tab.Screen>
       <Tab.Screen
         name="ShopTab"
         component={ShopScreen}
-        options={{
+        options={({ navigation }) => ({
           title: 'Shop',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🛒</Text>,
-        }}
+          headerLeft: () => <HomeButton navigation={navigation} />,
+        })}
+      />
+      <Tab.Screen
+        name="VideosTab"
+        component={VideosScreen}
+        options={({ navigation }) => ({
+          title: 'Videos',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🎬</Text>,
+          headerLeft: () => <HomeButton navigation={navigation} />,
+        })}
       />
       <Tab.Screen
         name="ArhaTab"
@@ -212,16 +238,18 @@ function RootTabs() {
         options={({ navigation }) => ({
           title: 'Arha',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🤖</Text>,
+          headerLeft: () => <HomeButton navigation={navigation} />,
           headerRight: () => <CloseButton navigation={navigation} />,
         })}
       />
       <Tab.Screen
         name="ProfileTab"
         component={ProfileScreen}
-        options={{
+        options={({ navigation }) => ({
           title: 'My Profile',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>👤</Text>,
-        }}
+          headerLeft: () => <HomeButton navigation={navigation} />,
+        })}
       />
     </Tab.Navigator>
   );
@@ -237,7 +265,7 @@ function AuthStack() {
 
 function RootNavigator() {
   const dispatch = useDispatch();
-  const { isAuthenticated, loaded, user, freshLogin } = useSelector((s) => s.auth);
+  const { isAuthenticated, loaded, user } = useSelector((s) => s.auth);
   const [introSeen, setIntroSeen] = useState(null); // null = not yet checked
 
   useEffect(() => {
@@ -271,8 +299,6 @@ function RootNavigator() {
         <IntroScreen onDone={finishIntro} />
       ) : !isAuthenticated ? (
         <AuthStack />
-      ) : freshLogin ? (
-        <StayConnectedScreen />
       ) : needsOnboarding ? (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />

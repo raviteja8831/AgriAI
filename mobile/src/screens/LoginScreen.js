@@ -4,37 +4,33 @@ import { Text, Button, Checkbox, IconButton } from 'react-native-paper';
 import { useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '../api';
-import { setCredentials, loginSuccess } from '../store/authSlice';
+import { setCredentials } from '../store/authSlice';
 import { useSnackbar } from '../components/SnackbarProvider';
 import MESSAGES from '../config/messages.json';
 import { colors } from '../utils/theme';
 import { TERMS_SECTIONS } from '../constants/terms';
+import { PRIVACY_SECTIONS } from '../constants/privacy';
 
 // Once a login has ever completed on this device, the referral prompt is
 // permanently hidden — it's only meant to be offered on the very first login.
 const HAS_LOGGED_IN_KEY = 'hasLoggedInBefore';
 
-function TermsModal({ visible, onClose }) {
+function PolicyModal({ visible, title, sections, onClose }) {
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.modalContainer}>
         <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>Terms and Conditions</Text>
+          <Text style={styles.modalTitle}>{title}</Text>
           <IconButton icon="close" onPress={onClose} />
         </View>
         <ScrollView contentContainerStyle={styles.modalBody}>
-          {TERMS_SECTIONS.map((section) => (
+          {sections.map((section) => (
             <View key={section.title} style={styles.policySection}>
               <Text style={styles.policyHeading}>{section.title}</Text>
               <Text style={styles.policyBody}>{section.body}</Text>
             </View>
           ))}
         </ScrollView>
-        <View style={styles.modalFooter}>
-          <Button mode="contained" buttonColor={colors.info} style={styles.verifyBtn} contentStyle={styles.btnContent} onPress={onClose}>
-            Close
-          </Button>
-        </View>
       </SafeAreaView>
     </Modal>
   );
@@ -52,7 +48,9 @@ export default function LoginScreen() {
   const [showReferral, setShowReferral] = useState(false);
   const [referralCode, setReferralCode] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(true);
+  const [whatsappUpdates, setWhatsappUpdates] = useState(true);
   const [termsVisible, setTermsVisible] = useState(false);
+  const [privacyVisible, setPrivacyVisible] = useState(false);
   const [canOfferReferral, setCanOfferReferral] = useState(false);
   const otpRefs = [useRef(), useRef(), useRef(), useRef()];
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -87,9 +85,13 @@ export default function LoginScreen() {
       snack.showWarning('Please accept the Terms and Conditions and Privacy Policy');
       return;
     }
+    if (!whatsappUpdates) {
+      snack.showWarning('Please enable WhatsApp updates to continue');
+      return;
+    }
     setLoading(true);
     try {
-      await authAPI.sendOTP(cleaned, referralCode.trim());
+      await authAPI.sendOTP(cleaned, referralCode.trim(), whatsappUpdates);
       snack.showSuccess(MESSAGES.success.otpSent);
       setResendTimer(60);
       slideToOTP();
@@ -103,7 +105,6 @@ export default function LoginScreen() {
     try {
       const { data } = await authAPI.verifyOTP({ phone: phone.replace(/\D/g, ''), otp: code });
       dispatch(setCredentials(data));
-      dispatch(loginSuccess());
       AsyncStorage.setItem(HAS_LOGGED_IN_KEY, 'true').catch(() => {});
       snack.showSuccess(MESSAGES.success.login);
     } catch {
@@ -179,14 +180,25 @@ export default function LoginScreen() {
                   I agree to the{' '}
                   <Text style={styles.termsLink} onPress={() => setTermsVisible(true)}>Terms and Conditions</Text>
                   {' '}and{' '}
-                  <Text style={styles.termsLink} onPress={() => setTermsVisible(true)}>Privacy Policy</Text>
+                  <Text style={styles.termsLink} onPress={() => setPrivacyVisible(true)}>Privacy Policy</Text>
+                </Text>
+              </View>
+
+              <View style={styles.termsRow}>
+                <Checkbox
+                  status={whatsappUpdates ? 'checked' : 'unchecked'}
+                  onPress={() => setWhatsappUpdates((v) => !v)}
+                  color={colors.primary}
+                />
+                <Text style={styles.termsText} onPress={() => setWhatsappUpdates((v) => !v)}>
+                  Keep me updated on WhatsApp 💬
                 </Text>
               </View>
 
               <Button mode="contained" buttonColor={colors.info}
-                rippleColor="transparent" onPress={phone.length === 10 && agreedToTerms ? handleSendOTP : undefined} loading={loading}
+                rippleColor="transparent" onPress={phone.length === 10 && agreedToTerms && whatsappUpdates ? handleSendOTP : undefined} loading={loading}
                 disabled={loading}
-                style={[styles.verifyBtn, (phone.length < 10 || !agreedToTerms) && styles.btnDisabled]} contentStyle={styles.btnContent}>
+                style={[styles.verifyBtn, (phone.length < 10 || !agreedToTerms || !whatsappUpdates) && styles.btnDisabled]} contentStyle={styles.btnContent}>
                 Send OTP
               </Button>
 
@@ -235,7 +247,8 @@ export default function LoginScreen() {
           )}
         </Animated.View>
       </View>
-      <TermsModal visible={termsVisible} onClose={() => setTermsVisible(false)} />
+      <PolicyModal visible={termsVisible} title="Terms and Conditions" sections={TERMS_SECTIONS} onClose={() => setTermsVisible(false)} />
+      <PolicyModal visible={privacyVisible} title="Privacy Policy" sections={PRIVACY_SECTIONS} onClose={() => setPrivacyVisible(false)} />
     </KeyboardAvoidingView>
   );
 }
@@ -260,7 +273,6 @@ const styles = StyleSheet.create({
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 20, paddingTop: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
   modalTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
   modalBody: { padding: 20 },
-  modalFooter: { paddingHorizontal: 20, paddingBottom: 20 },
   policySection: { marginBottom: 20 },
   policyHeading: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
   policyBody: { fontSize: 14, lineHeight: 21, color: colors.textSecondary },

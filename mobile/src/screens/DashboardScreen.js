@@ -5,6 +5,7 @@ import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
 import { useQuery, useMutation, keepPreviousData } from '@tanstack/react-query';
 import WeatherCard from '../components/WeatherCard';
+import CropAdVideoCard from '../components/CropAdVideoCard';
 import TodayBriefCard from '../components/TodayBriefCard';
 import MarketPriceCard from '../components/MarketPriceCard';
 import CropProgressCard from '../components/CropProgressCard';
@@ -198,6 +199,9 @@ export default function DashboardScreen({ navigation }) {
 
       {/* Today's brief */}
       <TodayBriefCard brief={brief} />
+
+      {/* Crop ads video */}
+      <CropAdVideoCard />
 
       {/* Pest risk banner (only if medium/high) */}
       <PestRiskBanner risk={pestRisk} />

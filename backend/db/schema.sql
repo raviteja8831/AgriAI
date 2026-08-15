@@ -18,13 +18,32 @@ CREATE TABLE IF NOT EXISTS users (
   fcm_token VARCHAR(500),
   last_login DATETIME,
   referred_by INT,
+  whatsapp_opt_in BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (referred_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- Adds referred_by to a users table created before this column existed (no-op on fresh installs)
-ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by INT AFTER last_login;
+-- Adds referred_by / whatsapp_opt_in to a users table created before these columns existed
+-- (no-op on fresh installs). Uses a prepared statement instead of
+-- "ADD COLUMN IF NOT EXISTS" because that clause errors on some MySQL builds.
+SET @col_exists = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'referred_by'
+);
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE users ADD COLUMN referred_by INT AFTER last_login', 'SELECT 1');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists = (
+  SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'whatsapp_opt_in'
+);
+SET @sql = IF(@col_exists = 0, 'ALTER TABLE users ADD COLUMN whatsapp_opt_in BOOLEAN DEFAULT TRUE AFTER referred_by', 'SELECT 1');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- Farms
 CREATE TABLE IF NOT EXISTS farms (

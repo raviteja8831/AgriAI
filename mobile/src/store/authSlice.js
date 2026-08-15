@@ -16,7 +16,7 @@ export const loadStoredAuth = createAsyncThunk('auth/loadStored', async () => {
 
 const authSlice = createSlice({
   name: 'auth',
-  initialState: { token: null, user: null, isAuthenticated: false, loaded: false, freshLogin: false },
+  initialState: { token: null, user: null, isAuthenticated: false, loaded: false },
   reducers: {
     setCredentials(state, { payload }) {
       state.token = payload.token;
@@ -33,21 +33,11 @@ const authSlice = createSlice({
       if (payload.token) AsyncStorage.setItem('token', payload.token).catch(() => {});
       AsyncStorage.setItem('user', JSON.stringify(state.user)).catch(() => {});
     },
-    // Marks that the user just completed the login action (as opposed to
-    // being auto-restored from stored auth on app launch), so the
-    // "stay connected" screen can be shown once per fresh login.
-    loginSuccess(state) {
-      state.freshLogin = true;
-    },
-    acknowledgeConnect(state) {
-      state.freshLogin = false;
-    },
     logout(state) {
       state.token = null;
       state.user = null;
       state.isAuthenticated = false;
       state.loaded = true;
-      state.freshLogin = false;
       setAuthToken(null);
       AsyncStorage.multiRemove(['token', 'user']).catch(() => {});
     },
@@ -77,5 +67,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, loginSuccess, acknowledgeConnect, logout, updateUser } = authSlice.actions;
+export const { setCredentials, logout, updateUser } = authSlice.actions;
 export default authSlice.reducer;

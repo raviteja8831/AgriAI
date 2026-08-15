@@ -28,7 +28,7 @@ const signToken = (id) =>
 const HARDCODED_OTP = '1234';
 
 exports.sendOTP = async (req, res) => {
-  const { phone, referralCode } = req.body;
+  const { phone, referralCode, whatsappUpdates } = req.body;
   if (!phone) return res.status(400).json({ success: false, message: 'Phone number required' });
   try {
     let user = await User.findOne({ where: { phone } });
@@ -44,11 +44,11 @@ exports.sendOTP = async (req, res) => {
           if (referrer) referredBy = referrer.id;
         }
       }
-      user = await User.create({ name: phone, phone, is_active: true, referred_by: referredBy });
+      user = await User.create({ name: phone, phone, is_active: true, referred_by: referredBy, whatsapp_opt_in: whatsappUpdates !== false });
     }
 
     const expires = new Date(Date.now() + 10 * 60 * 1000);
-    await user.update({ otp_code: HARDCODED_OTP, otp_expires_at: expires });
+    await user.update({ otp_code: HARDCODED_OTP, otp_expires_at: expires, whatsapp_opt_in: whatsappUpdates !== false });
 
     // TODO: replace with Twilio/SMS gateway
     console.log(`[OTP] ${phone} → ${HARDCODED_OTP}`);

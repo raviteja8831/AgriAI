@@ -17,6 +17,7 @@ const User = sequelize.define('User', {
   fcm_token: { type: DataTypes.STRING(500) },
   last_login: { type: DataTypes.DATE },
   referred_by: { type: DataTypes.INTEGER },
+  whatsapp_opt_in: { type: DataTypes.BOOLEAN, defaultValue: true },
 }, {
   tableName: 'users',
   timestamps: true,

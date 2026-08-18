@@ -22,6 +22,7 @@ export const dashboardAPI = {
 export const marketAPI = {
   getMyCrops: () => api.get('/market/my-crops'),
   getPrices: (crops) => api.get('/market', { params: { crops } }),
+  getVegFlowerPrices: () => api.get('/market/veg-flower'),
 };
 
 export const recommendationsAPI = {
@@ -96,4 +97,9 @@ export const notificationsAPI = {
   getAll: () => api.get('/notifications'),
   markRead: (id) => api.put(`/notifications/${id}/read`),
   markAllRead: () => api.put('/notifications/read-all'),
+};
+
+// Latest updates (home screen carousel)
+export const updatesAPI = {
+  getAll: () => api.get('/updates'),
 };

@@ -38,6 +38,8 @@ import ShopScreen from './src/screens/ShopScreen';
 import ArhaScreen from './src/screens/ArhaScreen';
 import NotificationsScreen from './src/screens/NotificationsScreen';
 import VideosScreen from './src/screens/VideosScreen';
+import VegFlowerPricesScreen from './src/screens/VegFlowerPricesScreen';
+import CategoriesScreen from './src/screens/CategoriesScreen';
 import CoinsScreen from './src/screens/CoinsScreen';
 import WinAssuredScreen from './src/screens/WinAssuredScreen';
 import CashbackScreen from './src/screens/CashbackScreen';
@@ -52,9 +54,11 @@ const headerTintColor = '#fff';
 const headerTitleStyle = { fontWeight: '700' };
 const HIDDEN_ITEM_STYLE = { height: 0, margin: 0, padding: 0, overflow: 'hidden' };
 
-// Hamburger menu button — shown on every drawer screen's header. Just takes the
-// user back to Dashboard; the sidebar itself is still reachable via the swipe
-// gesture from the left edge (drawerType 'front' below).
+// Hamburger menu button — shown on every drawer screen's header except Dashboard
+// (Dashboard fully owns its own header via HomeHeader, set at runtime — see
+// DashboardScreen.js). Just takes the user back home; the sidebar itself is
+// still reachable via the swipe gesture from the left edge (drawerType 'front'
+// below), or by tapping the 🏠 icon in HomeHeader on the Dashboard screen.
 const MenuButton = ({ navigation }) => (
   <TouchableOpacity
     onPress={() => navigation.navigate('Dashboard')}
@@ -146,24 +150,30 @@ function AppDrawer({ onDrawerOpenChange }) {
         drawerInactiveTintColor: colors.textPrimary,
       })}
     >
-      <Drawer.Screen name="Dashboard" component={DashboardScreen}  options={{ title: 'Home',          drawerIcon: () => <Text>🏠</Text> }} />
+      <Drawer.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{ title: 'Home', drawerIcon: () => <Text>🏠</Text> }}
+      />
       <Drawer.Screen name="Farms"     component={FarmsStack}       options={{ title: 'My Farms',      drawerIcon: () => <Text>🏡</Text>, headerShown: false }} />
       <Drawer.Screen name="Crops"     component={CropsStack}       options={{ title: 'Crops',         drawerIcon: () => <Text>🌿</Text>, headerShown: false }} />
       <Drawer.Screen name="Weather"   component={WeatherScreen}    options={{ title: 'Weather',       drawerIcon: () => <Text>🌤️</Text> }} />
       <Drawer.Screen name="Videos"    component={VideosScreen}     options={{ title: 'Videos',        drawerIcon: () => <Text>🎬</Text> }} />
       <Drawer.Screen name="Calendar"  component={CalendarScreen}   options={{ title: 'Crop Calendar', drawerIcon: () => <Text>📅</Text> }} />
       <Drawer.Screen name="Soil"      component={SoilScreen}       options={{ title: 'Soil Analysis', drawerIcon: () => <Text>🧪</Text> }} />
+      <Drawer.Screen name="VegFlowerPrices" component={VegFlowerPricesScreen} options={{ title: 'Veg & Flower Prices', drawerIcon: () => <Text>🥬</Text> }} />
       <Drawer.Screen name="Communication" component={CommunicationSettingsScreen} options={{ title: 'Communication Settings', drawerIcon: () => <Text>💬</Text> }} />
       <Drawer.Screen name="Terms"     component={TermsScreen}      options={{ title: 'Terms & Conditions', drawerIcon: () => <Text>📄</Text> }} />
       <Drawer.Screen name="Contact"   component={ContactScreen}    options={{ title: 'Contact Us',    drawerIcon: () => <Text>📩</Text> }} />
       <Drawer.Screen name="About"     component={AboutScreen}      options={{ title: 'About App',     drawerIcon: () => <Text>ℹ️</Text> }} />
-      {/* Reached only via the Cashback/Coins/Win-assured rows in DrawerContent — collapsed
-          to zero height so DrawerItemList's auto-generated list doesn't show them, without
-          touching state/index (which broke Dashboard's tap-to-navigate — see git history). */}
+      {/* Reached via the Cashback/Coins/Win-assured rows in DrawerContent, plus the
+          🎁/🪙 icons in HomeHeader (Coins/Cashback only) — collapsed to zero height so
+          DrawerItemList's auto-generated list doesn't show them, without touching
+          state/index (which broke Dashboard's tap-to-navigate — see git history). */}
       <Drawer.Screen name="Coins" component={CoinsScreen} options={{ title: 'Coins', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
       <Drawer.Screen name="WinAssured" component={WinAssuredScreen} options={{ title: 'Win Assured ₹100', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
       <Drawer.Screen name="Cashback" component={CashbackScreen} options={{ title: 'Cashback Balance', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
-      {/* Reached only via the bell icon in the Home header — see comment above. */}
+      {/* Reached via the Categories bottom tab's Notifications tile (see CategoriesScreen.js). */}
       <Drawer.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications', drawerItemStyle: HIDDEN_ITEM_STYLE }} />
       <Drawer.Screen
         name="Profile"
@@ -175,8 +185,8 @@ function AppDrawer({ onDrawerOpenChange }) {
 }
 
 // Bottom tab bar shown above the device's system nav buttons on every main screen.
-// Home hosts the existing drawer (Farms, Weather, Calendar, etc. stay reachable via
-// the hamburger menu there); Shop and Profile are quick-access tabs alongside it.
+// Labelled Home/Play/Categories/Account/Cart/Arha. Home hosts the existing drawer
+// (Farms, Weather, Calendar, etc. stay reachable via the hamburger menu there).
 function RootTabs() {
   // The drawer nested inside the Home tab reports its open/closed state up here so
   // the tab bar can hide while the drawer is sliding out — otherwise it stays visible
@@ -193,6 +203,8 @@ function RootTabs() {
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
         tabBarStyle: drawerOpen ? { display: 'none' } : { height: 70, paddingBottom: 8, paddingTop: 6 },
+        // Smooth cross-fade + shift instead of an instant hard-cut when switching tabs.
+        animation: 'shift',
       }}
     >
       <Tab.Screen
@@ -215,23 +227,43 @@ function RootTabs() {
         {() => <AppDrawer onDrawerOpenChange={setDrawerOpen} />}
       </Tab.Screen>
       <Tab.Screen
-        name="ShopTab"
-        component={ShopScreen}
+        name="VideosTab"
+        component={VideosScreen}
         options={({ navigation }) => ({
-          title: 'Shop',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🛒</Text>,
+          title: 'Play',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>▶️</Text>,
           headerLeft: () => <HomeButton navigation={navigation} />,
         })}
       />
       <Tab.Screen
-        name="VideosTab"
-        component={VideosScreen}
+        name="CategoriesTab"
+        component={CategoriesScreen}
         options={({ navigation }) => ({
-          title: 'Videos',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🎬</Text>,
+          title: 'Categories',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🗂️</Text>,
           headerLeft: () => <HomeButton navigation={navigation} />,
         })}
       />
+      <Tab.Screen
+        name="ProfileTab"
+        component={ProfileScreen}
+        options={({ navigation }) => ({
+          title: 'Account',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>👤</Text>,
+          headerLeft: () => <HomeButton navigation={navigation} />,
+        })}
+      />
+      <Tab.Screen
+        name="ShopTab"
+        component={ShopScreen}
+        options={({ navigation }) => ({
+          title: 'Cart',
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🛒</Text>,
+          headerLeft: () => <HomeButton navigation={navigation} />,
+        })}
+      />
+      {/* Back on the visible tab bar for now (also still reachable via the Categories
+          tab's Arha tile) — revisit whether it should move off the bar again later. */}
       <Tab.Screen
         name="ArhaTab"
         component={ArhaScreen}
@@ -240,15 +272,6 @@ function RootTabs() {
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🤖</Text>,
           headerLeft: () => <HomeButton navigation={navigation} />,
           headerRight: () => <CloseButton navigation={navigation} />,
-        })}
-      />
-      <Tab.Screen
-        name="ProfileTab"
-        component={ProfileScreen}
-        options={({ navigation }) => ({
-          title: 'My Profile',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>👤</Text>,
-          headerLeft: () => <HomeButton navigation={navigation} />,
         })}
       />
     </Tab.Navigator>

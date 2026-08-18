@@ -1,20 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import { View, ScrollView, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
-import { Text, ActivityIndicator, Portal, Modal, RadioButton, Button, Searchbar } from 'react-native-paper';
+import { Text, ActivityIndicator, Portal, Modal, RadioButton, Button } from 'react-native-paper';
 import * as Location from 'expo-location';
 import { useDispatch, useSelector } from 'react-redux';
 import { useQuery, useMutation, keepPreviousData } from '@tanstack/react-query';
 import WeatherCard from '../components/WeatherCard';
+import LatestUpdatesCarousel from '../components/LatestUpdatesCarousel';
 import CropAdVideoCard from '../components/CropAdVideoCard';
 import TodayBriefCard from '../components/TodayBriefCard';
 import MarketPriceCard from '../components/MarketPriceCard';
+import VegFlowerPriceCard from '../components/VegFlowerPriceCard';
 import CropProgressCard from '../components/CropProgressCard';
+import HomeHeader from '../components/HomeHeader';
+import CategoryPreviewCard from '../components/CategoryPreviewCard';
 import api from '../utils/api';
-import { authAPI, notificationsAPI } from '../api';
+import { authAPI, notificationsAPI, marketAPI } from '../api';
 import { updateUser } from '../store/authSlice';
 import { useSnackbar } from '../components/SnackbarProvider';
 import { colors } from '../utils/theme';
 import { capitalize } from '../utils/format';
+
+const CATEGORY_ROW = [
+  { emoji: '🏡', label: 'Farms', screen: 'Farms' },
+  { emoji: '🌿', label: 'Crops', screen: 'Crops' },
+  { emoji: '🌤️', label: 'Weather', screen: 'Weather' },
+  { emoji: '📅', label: 'Calendar', screen: 'Calendar' },
+  { emoji: '🧪', label: 'Soil', screen: 'Soil' },
+  { emoji: '🎬', label: 'Videos', screen: 'Videos' },
+  { emoji: '🥬', label: 'Veg & Flower', screen: 'VegFlowerPrices' },
+];
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -95,43 +109,29 @@ export default function DashboardScreen({ navigation }) {
     return () => { cancelled = true; };
   }, []);
 
-  // Shared with NotificationsScreen's ['notifications'] query — navigating there shows
-  // this cached unread count instantly while it refetches in the background.
-  const { data: notifData } = useQuery({
+  // Shared with NotificationsScreen's ['notifications'] query — pre-warms the cache so
+  // opening Notifications from the Categories tab shows data instantly while it refetches.
+  useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationsAPI.getAll().then((r) => r.data),
   });
-  const unreadCount = notifData?.unread || 0;
 
   React.useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => (
-        <Searchbar
-          placeholder="Search"
-          placeholderTextColor="#ffffffcc"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          style={styles.headerSearch}
-          inputStyle={styles.headerSearchInput}
-          icon="magnify"
-          iconColor="#fff"
-          rippleColor="#ffffff30"
+      header: () => (
+        <HomeHeader
+          searchQuery={searchQuery}
+          onChangeSearch={setSearchQuery}
+          onPressMenu={() => navigation.openDrawer()}
+          onPressRewards={() => navigation.navigate('Cashback')}
+          onPressCoins={() => navigation.navigate('Coins')}
+          onPressAddress={() => navigation.navigate('Farms')}
+          onPressLanguage={() => setLangModalVisible(true)}
+          language={user?.language}
         />
       ),
-      headerTitleContainerStyle: styles.headerTitleContainer,
-      headerRight: () => (
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => navigation.navigate('Notifications')} style={styles.bellButton}>
-            <Text style={{ fontSize: 20 }}>🔔</Text>
-            {unreadCount > 0 && <View style={styles.notifBadge} />}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => setLangModalVisible(true)} style={{ paddingHorizontal: 16 }}>
-            <Text style={{ fontSize: 20 }}>🌐</Text>
-          </TouchableOpacity>
-        </View>
-      ),
     });
-  }, [navigation, searchQuery, unreadCount]);
+  }, [navigation, searchQuery, user?.language]);
 
   const langMut = useMutation({
     mutationFn: authAPI.updateProfile,
@@ -160,6 +160,13 @@ export default function DashboardScreen({ navigation }) {
   const { data: marketData, refetch: refetchMarket } = useQuery({
     queryKey: ['market-my-crops'],
     queryFn: () => api.get('/market/my-crops').then((r) => r.data),
+  });
+
+  // Same query key VegFlowerPriceCard uses further down this screen — react-query
+  // dedupes identical keys, so this doesn't cost an extra request.
+  const { data: vegFlowerData } = useQuery({
+    queryKey: ['veg-flower-prices'],
+    queryFn: () => marketAPI.getVegFlowerPrices().then((r) => r.data),
   });
 
   const onRefresh = () => { refetch(); refetchMarket(); };
@@ -194,8 +201,58 @@ export default function DashboardScreen({ navigation }) {
         <Text style={styles.greetDate}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</Text>
       </View>
 
+      {/* Categories */}
+      <Text style={styles.sectionHeading}>📂 Categories</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+        {CATEGORY_ROW.map((c) => (
+          <TouchableOpacity key={c.screen} style={styles.categoryItem} onPress={() => navigation.navigate(c.screen)}>
+            <View style={styles.categoryIcon}>
+              <Text style={{ fontSize: 22 }}>{c.emoji}</Text>
+            </View>
+            <Text style={styles.categoryLabel} numberOfLines={1}>{c.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Latest updates carousel */}
+      <LatestUpdatesCarousel navigation={navigation} />
+
       {/* Weather */}
       <WeatherCard weather={weather} />
+
+      {/* Category preview cards */}
+      <CategoryPreviewCard
+        emoji="🏡" title="My Farms"
+        items={[`${s.farms || 0} farm(s) registered`, `${s.total_area || 0} acres total`]}
+        onSeeAll={() => navigation.navigate('Farms')}
+      />
+      <CategoryPreviewCard
+        emoji="🌿" title="Crops"
+        items={cropProgress.length ? cropProgress.slice(0, 3).map((c) => `${c.crop_name} — ${c.growth_stage || c.status || 'growing'}`) : []}
+        onSeeAll={() => navigation.navigate('Crops')}
+      />
+      <CategoryPreviewCard
+        emoji="📅" title="Crop Calendar"
+        items={[`${s.today_tasks || 0} task(s) today`, `${s.overdue_tasks || 0} overdue`]}
+        onSeeAll={() => navigation.navigate('Calendar')}
+      />
+      <CategoryPreviewCard
+        emoji="🧪" title="Soil Analysis"
+        items={['Get your soil tested before the next sowing cycle']}
+        onSeeAll={() => navigation.navigate('Soil')}
+      />
+      <CategoryPreviewCard
+        emoji="🎬" title="Videos"
+        items={['Featured for your crops', 'New fertilizer launch', 'Seasonal discount offers']}
+        onSeeAll={() => navigation.navigate('Videos')}
+      />
+      <CategoryPreviewCard
+        emoji="🥬" title="Veg & Flower Prices"
+        items={[...(vegFlowerData?.vegetables || []), ...(vegFlowerData?.flowers || [])]
+          .slice(0, 3)
+          .map((p) => `${p.crop_name} — ₹${p.price}/${p.unit}`)}
+        onSeeAll={() => navigation.navigate('VegFlowerPrices')}
+      />
 
       {/* Today's brief */}
       <TodayBriefCard brief={brief} />
@@ -240,6 +297,9 @@ export default function DashboardScreen({ navigation }) {
       {/* Market prices */}
       <MarketPriceCard prices={prices} date={marketData?.date} />
 
+      {/* Vegetable & flower prices */}
+      <VegFlowerPriceCard navigation={navigation} />
+
       {/* No farms nudge */}
       {(s.farms || 0) === 0 && (
         <TouchableOpacity style={styles.addFarmBanner} onPress={() => navigation.navigate('Farms')}>
@@ -274,11 +334,6 @@ export default function DashboardScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  headerTitleContainer: { flex: 1, marginHorizontal: 2 },
-  headerSearch: { height: 40, borderRadius: 20, backgroundColor: '#ffffff30', elevation: 0 },
-  headerSearchInput: { fontSize: 14, minHeight: 0, alignSelf: 'center', color: '#fff' },
-  bellButton: { paddingHorizontal: 12, position: 'relative' },
-  notifBadge: { position: 'absolute', top: 2, right: 8, width: 9, height: 9, borderRadius: 4.5, backgroundColor: colors.error, borderWidth: 1, borderColor: colors.primary },
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: 14 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
@@ -287,6 +342,11 @@ const styles = StyleSheet.create({
   greeting: { marginBottom: 12 },
   greetName: { fontSize: 22, fontWeight: '800', color: colors.primary },
   greetDate: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
+  sectionHeading: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 },
+  categoryRow: { gap: 16, paddingBottom: 4, marginBottom: 12 },
+  categoryItem: { alignItems: 'center', width: 62 },
+  categoryIcon: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
+  categoryLabel: { fontSize: 10, color: colors.textSecondary, marginTop: 4, textAlign: 'center' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
   statBox: { flex: 1, minWidth: '44%', backgroundColor: '#fff', borderRadius: 14, padding: 14, alignItems: 'center', elevation: 2 },
   statBoxAlert: { backgroundColor: '#fff3e0', borderWidth: 1.5, borderColor: colors.warning },

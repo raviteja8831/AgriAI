@@ -235,6 +235,31 @@ CREATE TABLE IF NOT EXISTS notifications (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- Latest Updates (home screen carousel) — global feed, not per-user.
+-- `screen` is an in-app route name (e.g. 'Weather', 'Crops') the app navigates
+-- to when the card is tapped.
+CREATE TABLE IF NOT EXISTS updates (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  emoji VARCHAR(8) DEFAULT '📰',
+  title VARCHAR(200) NOT NULL,
+  body VARCHAR(300) NOT NULL,
+  screen VARCHAR(100) NOT NULL,
+  sort_order INT DEFAULT 0,
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seeded only when the table is empty, so re-running this file never duplicates rows.
+INSERT INTO updates (emoji, title, body, screen, sort_order)
+SELECT * FROM (
+  SELECT '🌧️' AS emoji, 'Monsoon Update' AS title, 'Heavy rainfall expected in your region this week.' AS body, 'Weather' AS screen, 1 AS sort_order
+  UNION ALL SELECT '🌾', 'New Crop Advisory', 'Updated guidelines released for the Rabi season.', 'Calendar', 2
+  UNION ALL SELECT '🧪', 'Soil Health Alert', 'Get your soil tested before the next sowing cycle.', 'Soil', 3
+  UNION ALL SELECT '🐛', 'Pest Watch', 'Armyworm activity reported in nearby districts.', 'Crops', 4
+  UNION ALL SELECT '🏡', 'Register Your Farm', 'Add your farm to unlock location-based advice.', 'Farms', 5
+) AS seed
+WHERE NOT EXISTS (SELECT 1 FROM updates);
+
 -- Fertilizer Recommendations
 CREATE TABLE IF NOT EXISTS fertilizer_recommendations (
   id INT AUTO_INCREMENT PRIMARY KEY,
